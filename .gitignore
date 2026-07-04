@@ -1,0 +1,45 @@
+# Python build caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+venv/
+pip-selfcheck.json
+pip-log.txt
+.venv/
+backend/storage/database.db
+backend/storage/resumes/
+backend/storage/portfolios/
+backend/storage/templates/
+
+# Flutter build caches
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+/build/
+/frontend/build/
+
+# IDE files
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

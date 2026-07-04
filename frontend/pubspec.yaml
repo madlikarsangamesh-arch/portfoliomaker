@@ -1,0 +1,46 @@
+name: portfolio_ai
+description: "A premium AI-powered portfolio website builder client."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State Management
+  flutter_riverpod: ^2.4.9
+  riverpod_annotation: ^2.3.3
+
+  # Routing
+  go_router: ^12.1.3
+
+  # Networking & Auth Helpers
+  http: ^1.2.0
+  flutter_secure_storage: ^9.0.0
+  shared_preferences: ^2.2.2
+
+  # Modern UI Components
+  google_fonts: ^6.1.0
+  shimmer: ^3.0.0
+  qr_flutter: ^4.1.0
+  fl_chart: ^0.66.0
+  file_picker: ^6.1.1
+  url_launcher: ^6.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+  riverpod_generator: ^2.3.9
+  build_runner: ^2.4.8
+
+flutter:
+  uses-material-design: true
+
+  # Custom assets (like local image vectors/placeholders)
+  assets:
+    - assets/
