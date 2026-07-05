@@ -42,7 +42,7 @@ class AppTheme {
           color: Colors.white70,
         ),
       ),
-      cardTheme: const CardTheme(
+      cardTheme: const CardThemeData(
         color: glassCardBg,
         elevation: 0,
         shape: RoundedRectangleBorder(

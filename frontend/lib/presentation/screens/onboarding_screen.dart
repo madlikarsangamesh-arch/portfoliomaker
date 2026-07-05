@@ -312,9 +312,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             Expanded(
               flex: 1,
               child: Container(
-                border: const Border(left: BorderSide(color: AppTheme.glassBorder)),
+                decoration: BoxDecoration(
+                  border: const Border(left: BorderSide(color: AppTheme.glassBorder)),
+                  color: Colors.white.withOpacity(0.01),
+                ),
                 padding: const EdgeInsets.all(20),
-                color: Colors.white.withOpacity(0.01),
                 child: _buildCollectedSummaryPanel(),
               ),
             ),
@@ -326,7 +328,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Widget _buildChatBubble(ChatMessage message) {
     final align = message.isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start;
     final bubbleColor = message.isUser ? AppTheme.neonPurple.withOpacity(0.2) : AppTheme.glassCardBg;
-    final textColor = message.isUser ? Colors.white : Colors.white90;
+    final textColor = message.isUser ? Colors.white : Colors.white.withOpacity(0.9);
     
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),

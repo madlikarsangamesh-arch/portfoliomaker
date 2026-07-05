@@ -93,7 +93,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => Navigator.pushNamed(context, '/onboarding'),
-        gradient: AppTheme.primaryGradient,
+        backgroundColor: AppTheme.neonCyan,
         icon: const Icon(Icons.bolt, color: Colors.black),
         label: const Text('Deploy AI Portfolio', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
       ),
@@ -102,7 +102,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   Widget _buildWelcomeHeader(AuthState auth) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.between,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,

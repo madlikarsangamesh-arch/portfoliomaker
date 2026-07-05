@@ -99,7 +99,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.between,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(item['title'] as String, style: const TextStyle(color: Colors.white38, fontSize: 12)),
                   Icon(item['icon'] as IconData, color: color, size: 18),

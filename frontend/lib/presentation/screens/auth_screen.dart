@@ -99,7 +99,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       Text(
                         _isLogin ? 'Sign in to manage portfolios' : 'Register to deploy in seconds',
                         style: const TextStyle(color: Colors.white38, fontSize: 13),
-                        textAlign: Center,
+                        textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 32),
                       if (authState.error != null) ...[
