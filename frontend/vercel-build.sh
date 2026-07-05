@@ -2,6 +2,13 @@
 # Exit immediately if a command exits with a non-zero status
 set -e
 
+# Navigate to the frontend directory if running from the project root
+if [ ! -f "pubspec.yaml" ] && [ -d "frontend" ]; then
+  echo "Moving to frontend directory..."
+  cd frontend
+fi
+
+
 echo "=== System Diagnostics ==="
 uname -a
 echo "========================="
