@@ -33,6 +33,7 @@ flutter doctor -v
 
 echo "=== Configuring Flutter for Web ==="
 flutter config --enable-web
+flutter create . --platforms web
 
 echo "=== Fetching Flutter packages ==="
 flutter pub get
