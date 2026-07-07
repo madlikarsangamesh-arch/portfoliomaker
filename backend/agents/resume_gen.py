@@ -22,7 +22,20 @@ class ResumeGeneratorAgent:
         """
         Generates an ATS-friendly HTML resume template.
         """
-        # Skills details or fallback
+        def sanitize_list(v):
+            return v if isinstance(v, list) else []
+
+        profile["skills"] = sanitize_list(profile.get("skills"))
+        profile["skills_details"] = sanitize_list(profile.get("skills_details"))
+        profile["education"] = sanitize_list(profile.get("education"))
+        profile["experience"] = sanitize_list(profile.get("experience"))
+        profile["projects"] = sanitize_list(profile.get("projects"))
+        profile["certifications"] = sanitize_list(profile.get("certifications"))
+        profile["extracurriculars"] = sanitize_list(profile.get("extracurriculars"))
+        profile["competitions"] = sanitize_list(profile.get("competitions"))
+        profile["publications"] = sanitize_list(profile.get("publications"))
+        profile["scholarships"] = sanitize_list(profile.get("scholarships"))
+
         skills_details = profile.get("skills_details", [])
         if skills_details:
             skills_str = ""
@@ -223,6 +236,20 @@ class ResumeGeneratorAgent:
         """
         Generates letter size standard PDF using reportlab or mocks local path.
         """
+        def sanitize_list(v):
+            return v if isinstance(v, list) else []
+
+        profile["skills"] = sanitize_list(profile.get("skills"))
+        profile["skills_details"] = sanitize_list(profile.get("skills_details"))
+        profile["education"] = sanitize_list(profile.get("education"))
+        profile["experience"] = sanitize_list(profile.get("experience"))
+        profile["projects"] = sanitize_list(profile.get("projects"))
+        profile["certifications"] = sanitize_list(profile.get("certifications"))
+        profile["extracurriculars"] = sanitize_list(profile.get("extracurriculars"))
+        profile["competitions"] = sanitize_list(profile.get("competitions"))
+        profile["publications"] = sanitize_list(profile.get("publications"))
+        profile["scholarships"] = sanitize_list(profile.get("scholarships"))
+
         dest_path = os.path.join(settings.LOCAL_STORAGE_DIR, "resumes", filename)
         
         if not HAS_REPORTLAB:

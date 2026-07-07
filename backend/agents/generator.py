@@ -11,13 +11,34 @@ class GeneratorAgent:
         Generates index.html, style.css, and script.js based on profile data and design plan parameters.
         Returns (html_content, css_content, js_content).
         """
+        def sanitize_list(v):
+            return v if isinstance(v, list) else []
+
+        def sanitize_dict(v):
+            return v if isinstance(v, dict) else {}
+
+        profile["skills"] = sanitize_list(profile.get("skills"))
+        profile["skills_details"] = sanitize_list(profile.get("skills_details"))
+        profile["education"] = sanitize_list(profile.get("education"))
+        profile["experience"] = sanitize_list(profile.get("experience"))
+        profile["projects"] = sanitize_list(profile.get("projects"))
+        profile["certifications"] = sanitize_list(profile.get("certifications"))
+        profile["extracurriculars"] = sanitize_list(profile.get("extracurriculars"))
+        profile["competitions"] = sanitize_list(profile.get("competitions"))
+        profile["publications"] = sanitize_list(profile.get("publications"))
+        profile["scholarships"] = sanitize_list(profile.get("scholarships"))
+        profile["social_links"] = sanitize_dict(profile.get("social_links"))
+
+        design_plan["navigation"] = sanitize_list(design_plan.get("navigation"))
+        design_plan["sections"] = sanitize_list(design_plan.get("sections"))
+
         primary_color = design_plan.get("primary_color", "#3b82f6")
         secondary_color = design_plan.get("secondary_color", "#1f2937")
         font_family = design_plan.get("font", "Inter")
         layout_style = design_plan.get("layout", "grid-cards")
         bg_style = design_plan.get("background_style", "gradient")
         button_style = design_plan.get("button_style", "rounded")
-        skills_icons = design_plan.get("skills_icons", {})
+        skills_icons = sanitize_dict(design_plan.get("skills_icons"))
         
         is_dark = "dark" in design_plan.get("template", "minimal").lower() or "cyberpunk" in design_plan.get("template", "minimal").lower() or "developer" in design_plan.get("template", "minimal").lower()
         
