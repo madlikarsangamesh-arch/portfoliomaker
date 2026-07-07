@@ -21,14 +21,6 @@ class InfoCollectorAgent:
             missing.append("Professional Title")
         if not profile.email or profile.email.strip() == "":
             missing.append("Email Address")
-        if not profile.about_me or profile.about_me.strip() == "":
-            missing.append("About Me")
-        if not profile.skills or len(profile.skills) == 0:
-            missing.append("Skills")
-        if not profile.experience or len(profile.experience) == 0:
-            missing.append("Work Experience")
-        if not profile.projects or len(profile.projects) == 0:
-            missing.append("Projects")
 
         if len(missing) == 0:
             return True, [], []

@@ -146,6 +146,16 @@ class PortfolioNotifier extends StateNotifier<PortfolioState> {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         
+        if (data['status'] == 'incomplete') {
+          _failAllPendingSteps();
+          final missing = data['missing_fields'] as List? ?? [];
+          state = state.copyWith(
+            isLoading: false,
+            error: 'Profile incomplete! Please fill: ${missing.join(", ")}',
+          );
+          return false;
+        }
+        
         // Fast forward animations to look satisfying
         _updateStep(1, 'completed');
         _updateStep(2, 'running');
