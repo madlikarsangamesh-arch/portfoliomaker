@@ -463,10 +463,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               child: ListTile(
                 title: const Text('Primary', style: TextStyle(fontSize: 12)),
                 subtitle: const Text('Hex: #8B5CF6'),
-                leading: CircleAvatar(
+                leading: const CircleAvatar(
                   backgroundColor: AppTheme.neonPurple,
                   radius: 16,
-                  border: Border.all(color: Colors.white24),
                 ),
               ),
             ),
@@ -474,10 +473,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               child: ListTile(
                 title: const Text('Secondary', style: TextStyle(fontSize: 12)),
                 subtitle: const Text('Hex: #00FFCC'),
-                leading: CircleAvatar(
+                leading: const CircleAvatar(
                   backgroundColor: AppTheme.neonCyan,
                   radius: 16,
-                  border: Border.all(color: Colors.white24),
                 ),
               )
             )
@@ -524,7 +522,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.neonCyan,
               foregroundColor: Colors.black,
-              fontWeight: FontWeight.bold,
+              textStyle: const TextStyle(fontWeight: FontWeight.bold),
             ),
             child: Text(_currentStep == 2 ? 'Assemble & Deploy' : 'Next'),
           ),
