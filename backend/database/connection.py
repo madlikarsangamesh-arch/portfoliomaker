@@ -64,6 +64,18 @@ def init_db():
         )
     """)
     
+    # CV History table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS cv_history (
+            id TEXT PRIMARY KEY,
+            user_id TEXT,
+            portfolio_id TEXT,
+            version INTEGER,
+            resume_url TEXT,
+            created_at TEXT
+        )
+    """)
+    
     conn.commit()
     conn.close()
 

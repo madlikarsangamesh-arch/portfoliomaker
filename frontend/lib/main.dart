@@ -9,6 +9,9 @@ import 'package:portfolio_ai/presentation/screens/preview_screen.dart';
 import 'package:portfolio_ai/presentation/screens/analytics_screen.dart';
 import 'package:portfolio_ai/presentation/screens/admin_screen.dart';
 import 'package:portfolio_ai/presentation/screens/settings_screen.dart';
+import 'package:portfolio_ai/presentation/screens/editor_screen.dart';
+
+final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.dark);
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,15 +22,18 @@ void main() {
   );
 }
 
-class PortfolioAIApp extends StatelessWidget {
+class PortfolioAIApp extends ConsumerWidget {
   const PortfolioAIApp({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
+
     return MaterialApp(
       title: 'AI Portfolio Engineer',
-      theme: AppTheme.darkTheme,
-      themeMode: ThemeMode.dark,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeMode,
       debugShowCheckedModeBanner: false,
       initialRoute: '/auth',
       routes: {
@@ -39,7 +45,9 @@ class PortfolioAIApp extends StatelessWidget {
         '/analytics': (context) => const AnalyticsScreen(),
         '/admin': (context) => const AdminScreen(),
         '/settings': (context) => const SettingsScreen(),
+        '/editor': (context) => const EditorScreen(),
       },
     );
   }
 }
+

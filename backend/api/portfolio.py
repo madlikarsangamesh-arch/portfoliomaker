@@ -62,6 +62,21 @@ async def generate_portfolio(
     elif not result.get("success"):
         raise HTTPException(status_code=500, detail=result.get("error", "Generation failed"))
 
+    # Save to CV History
+    try:
+        port_rec = portfolio_repository.get_by_id(portfolio_id)
+        ver = port_rec.get("version", 1) if port_rec else 1
+        portfolio_repository.save_cv_version(
+            user_id=user_id,
+            portfolio_id=portfolio_id,
+            resume_url=result.get("resume_url"),
+            version=ver,
+            created_at="2026-07-04T20:30:00Z"
+        )
+    except Exception as ex:
+        import logging
+        logging.getLogger("PortfolioAI.API.Portfolio").error(f"Failed to save CV version: {ex}")
+
     return {
         "status": "completed",
         "portfolio_id": result.get("portfolio_id"),
@@ -110,3 +125,91 @@ def download_source(portfolio_id: str):
         media_type="application/x-zip-compressed",
         headers=headers
     )
+
+@router.post("/save")
+def save_portfolio(payload: dict):
+    portfolio_id = payload.get("portfolio_id")
+    user_id = payload.get("user_id")
+    profile = payload.get("profile")
+    design = payload.get("design")
+    
+    if not portfolio_id or not user_id:
+        raise HTTPException(status_code=400, detail="Missing user_id or portfolio_id.")
+        
+    existing = portfolio_repository.get_by_id(portfolio_id)
+    version = existing.get("version", 1) if existing else 1
+    created_at = existing.get("created_at") if existing else "2026-07-04T20:30:00Z"
+    
+    data = {
+        "id": portfolio_id,
+        "user_id": user_id,
+        "profile": profile,
+        "design": design,
+        "html_code": existing.get("html_code") if existing else None,
+        "css_code": existing.get("css_code") if existing else None,
+        "js_code": existing.get("js_code") if existing else None,
+        "deployment_url": existing.get("deployment_url") if existing else None,
+        "recruiter_scorecard": existing.get("recruiter_scorecard") if existing else None,
+        "is_active": True,
+        "version": version,
+        "created_at": created_at,
+        "updated_at": "2026-07-04T20:30:00Z"
+    }
+    portfolio_repository.save(portfolio_id, data)
+    return {"status": "success", "message": "Autosaved successfully."}
+
+@router.post("/upload-image")
+async def upload_image(
+    file: UploadFile = File(...),
+    folder: str = Form("images")
+):
+    try:
+        import os
+        from backend.config import settings
+        file_bytes = await file.read()
+        filename = file.filename
+        original_size = len(file_bytes)
+        
+        # Save file to disk/cloud with compression in firebase_service
+        url = firebase_service.upload_file(folder, filename, file_bytes)
+        
+        # Get compressed size
+        compressed_size = original_size
+        filename_only = os.path.basename(url)
+        local_path = os.path.join(settings.LOCAL_STORAGE_DIR, folder, filename_only)
+        if os.path.exists(local_path):
+            compressed_size = os.path.getsize(local_path)
+            
+        return {
+            "status": "success", 
+            "url": url, 
+            "original_size": original_size, 
+            "compressed_size": compressed_size
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Image upload failed: {e}")
+
+@router.post("/ai-polish")
+def ai_polish(payload: dict):
+    from backend.services.llm import llm_service
+    text = payload.get("text", "")
+    context = payload.get("context", "")
+    
+    if not text:
+        raise HTTPException(status_code=400, detail="No text provided to polish.")
+        
+    system_instruction = "You are a professional copywriter and resume optimization assistant. Rewrite the user's bullet point or biography to be highly impactful, quantified, professional, and clear. Keep a similar length."
+    prompt = f"Optimize this text.\nContext: {context}\nText to polish: {text}\n\nPolished text:"
+    
+    polished = llm_service.call(
+        prompt=prompt,
+        system_instruction=system_instruction,
+        fallback_response=text
+    )
+    return {"status": "success", "polished_text": polished.strip()}
+
+@router.get("/cv-history/{user_id}")
+def get_cv_history_endpoint(user_id: str):
+    history = portfolio_repository.get_cv_history(user_id)
+    return history
+

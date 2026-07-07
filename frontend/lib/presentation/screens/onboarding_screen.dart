@@ -7,18 +7,6 @@ import 'package:portfolio_ai/presentation/providers/auth_provider.dart';
 import 'package:portfolio_ai/presentation/providers/portfolio_provider.dart';
 import 'package:portfolio_ai/presentation/widgets/glass_card.dart';
 
-class ChatMessage {
-  final String text;
-  final bool isUser;
-  final Widget? customWidget;
-
-  ChatMessage({
-    required this.text,
-    required this.isUser,
-    this.customWidget,
-  });
-}
-
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({Key? key}) : super(key: key);
 
@@ -27,57 +15,47 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 }
 
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
-  final List<ChatMessage> _messages = [];
-  final _textController = TextEditingController();
-  final _scrollController = ScrollController();
+  int _currentStep = 0; // 0: Resume, 1: Basic Info, 2: Theme Select
   
   // Data State
-  String _fullName = '';
-  String _title = '';
-  String _email = '';
-  String _location = '';
-  String _about = '';
-  final List<String> _skills = [];
+  final _nameController = TextEditingController();
+  final _titleController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _locationController = TextEditingController();
+  
   Uint8List? _resumeBytes;
   String? _resumeName;
   
-  // Design preferences
-  String _selectedTemplate = 'Glassmorphism';
-  String _primaryColor = '#00FFCC';
-  String _secondaryColor = '#8B5CF6';
-
-  int _interviewStep = 0;
+  // Photo State
+  Uint8List? _photoBytes;
+  String? _photoName;
+  String? _photoUrl;
+  int? _photoBeforeSize;
+  int? _photoAfterSize;
+  bool _isUploadingPhoto = false;
+  
+  // Design Preferences
+  String _selectedTemplate = 'Minimal';
+  String _primaryColor = '#8B5CF6';
+  String _secondaryColor = '#00FFCC';
 
   @override
   void initState() {
     super.initState();
     final auth = ref.read(authProvider);
-    _fullName = auth.fullName ?? '';
-    _email = auth.email ?? '';
-    
-    // Initial welcome message from AI
-    _messages.add(
-      ChatMessage(
-        text: "Hi! I am your AI Portfolio Engineer. I will interview you, design your website, enhance your copy, run QA tests, deploy to Vercel, and review it like a recruiter.\n\nLet's get started. To speed things up, you can upload your resume directly, or tell me: What is your full name?",
-        isUser: false,
-        customWidget: _buildResumeUploadButton(),
-      ),
-    );
+    _nameController.text = auth.fullName ?? '';
+    _emailController.text = auth.email ?? '';
+    _titleController.text = 'Fullstack Developer';
+    _locationController.text = 'Remote';
   }
 
-  Widget _buildResumeUploadButton() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 12.0),
-      child: OutlinedButton.icon(
-        onPressed: _pickResume,
-        icon: const Icon(Icons.upload_file, color: AppTheme.neonCyan),
-        label: Text(_resumeName ?? 'Upload Resume (PDF/TXT)'),
-        style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: AppTheme.neonCyan),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      ),
-    );
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _titleController.dispose();
+    _emailController.dispose();
+    _locationController.dispose();
+    super.dispose();
   }
 
   void _pickResume() async {
@@ -89,171 +67,94 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       setState(() {
         _resumeBytes = result.files.single.bytes;
         _resumeName = result.files.single.name;
-        _messages.add(ChatMessage(text: "Uploaded resume: $_resumeName", isUser: true));
       });
-      _scrollToBottom();
       
-      // Simulate AI analyzing resume
-      _addSystemMessage("Analyzing your resume structure... Extracting work history, skills, and projects.");
-      await Future.delayed(const Duration(milliseconds: 1500));
-      
-      // Pre-populate mock fields extracted from resume
+      // Auto-extract mock resume data
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Extracting details from resume...'),
+          backgroundColor: AppTheme.neonCyan,
+        ),
+      );
+      await Future.delayed(const Duration(milliseconds: 1000));
       setState(() {
-        _title = "Senior Software Engineer";
-        _location = "San Francisco, CA";
-        _about = "Passionate engineer focusing on building scalable systems.";
-        _skills.addAll(["Python", "JavaScript", "Flutter", "React", "Docker"]);
-      });
-
-      _addSystemMessage("Extracted successfully! I found 5 core skills: Python, JavaScript, Flutter, React, Docker. \n\nNext, let's select a design template. Which theme do you like best? (Glassmorphism, Cyberpunk, Minimalist, Corporate, Apple Style)");
-      setState(() {
-        _interviewStep = 4; // jump to template selection step
+        _titleController.text = "Senior Software Engineer";
+        _locationController.text = "San Francisco, CA";
+        _currentStep = 1; // Auto advance to Basic Info step
       });
     }
   }
 
-  void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
+  void _pickPhoto() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+    );
+    if (result != null && result.files.single.bytes != null) {
+      setState(() {
+        _isUploadingPhoto = true;
+        _photoBytes = result.files.single.bytes;
+        _photoName = result.files.single.name;
+        _photoBeforeSize = result.files.single.size;
+      });
+      
+      final uploadResult = await ref.read(portfolioProvider.notifier).uploadImage(
+        bytes: _photoBytes!,
+        filename: _photoName!,
+        folder: 'profiles',
+      );
+      
+      if (uploadResult != null && uploadResult['status'] == 'success') {
+        setState(() {
+          _photoUrl = uploadResult['url'];
+          _photoAfterSize = uploadResult['compressed_size'];
+          _isUploadingPhoto = false;
+        });
+      } else {
+        setState(() {
+          _isUploadingPhoto = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to upload and compress photo.'),
+            backgroundColor: Colors.redAccent,
+          ),
         );
       }
-    });
-  }
-
-  void _addSystemMessage(String text, {Widget? customWidget}) {
-    setState(() {
-      _messages.add(ChatMessage(text: text, isUser: false, customWidget: customWidget));
-    });
-    _scrollToBottom();
-  }
-
-  void _handleUserMessage(String text) async {
-    if (text.trim().isEmpty) return;
-    
-    setState(() {
-      _messages.add(ChatMessage(text: text, isUser: true));
-      _textController.clear();
-    });
-    _scrollToBottom();
-
-    await Future.delayed(const Duration(milliseconds: 600));
-
-    // Conversational state loop
-    switch (_interviewStep) {
-      case 0: // Full name response
-        _fullName = text;
-        _interviewStep = 1;
-        _addSystemMessage("Nice to meet you, $_fullName! What is your professional title? (e.g. Fullstack Developer)");
-        break;
-      case 1: // Title response
-        _title = text;
-        _interviewStep = 2;
-        _addSystemMessage("Awesome. What is your contact email for hiring managers?");
-        break;
-      case 2: // Email response
-        _email = text;
-        _interviewStep = 3;
-        _addSystemMessage("Got it. Tell me a bit about your top technical skills. Write them down separated by commas.");
-        break;
-      case 3: // Skills response
-        final parsedSkills = text.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
-        _skills.addAll(parsedSkills);
-        _interviewStep = 4;
-        _addSystemMessage(
-          "Got it. Let's decide your design aesthetic. Which layout template fits your brand?",
-          customWidget: _buildTemplatePicker(),
-        );
-        break;
-      case 4: // Design preferences selection
-        _selectedTemplate = text;
-        _interviewStep = 5;
-        _addSystemMessage(
-          "Perfect! I have designed your site. Click 'Assemble & Deploy' below to run the AI Portfolio Engineering loop.",
-          customWidget: _buildDeployWidget(),
-        );
-        break;
-      default:
-        _addSystemMessage("I am ready to build! Click 'Assemble & Deploy' in the chat options to host your website.");
     }
   }
 
-  Widget _buildTemplatePicker() {
-    final templates = ['Glassmorphism', 'Cyberpunk', 'Minimal', 'Creative', 'Apple Style'];
-    return Padding(
-      padding: const EdgeInsets.only(top: 8.0),
-      child: Wrap(
-        spacing: 8,
-        children: templates.map((t) {
-          return ChoiceChip(
-            label: Text(t),
-            selected: _selectedTemplate == t,
-            onSelected: (selected) {
-              if (selected) {
-                setState(() {
-                  _selectedTemplate = t;
-                });
-                _handleUserMessage(t);
-              }
-            },
-          );
-        }).toList(),
-      ),
-    );
+  void _skipAllAndDeploy() {
+    // Fill with defaults and launch compilation
+    _submitOrchestration();
   }
 
-  Widget _buildDeployWidget() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 12.0),
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          gradient: AppTheme.primaryGradient,
-        ),
-        child: ElevatedButton.icon(
-          onPressed: _startOrchestrator,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.transparent,
-            shadowColor: Colors.transparent,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-          ),
-          icon: const Icon(Icons.bolt, color: Colors.black),
-          label: const Text('Assemble & Deploy Website', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-        ),
-      ),
-    );
-  }
-
-  void _startOrchestrator() async {
+  void _submitOrchestration() async {
     final auth = ref.read(authProvider);
     if (auth.userId == null) return;
 
     final profile = {
-      'full_name': _fullName,
-      'professional_title': _title,
-      'email': _email,
-      'location': _location.isNotEmpty ? _location : 'Remote',
-      'about_me': _about.isNotEmpty ? _about : 'Experienced professional creating digital products.',
-      'skills': _skills.isNotEmpty ? _skills : ['Flutter', 'Python', 'FastAPI'],
+      'full_name': _nameController.text.isNotEmpty ? _nameController.text : 'Developer',
+      'professional_title': _titleController.text.isNotEmpty ? _titleController.text : 'Engineer',
+      'email': _emailController.text.isNotEmpty ? _emailController.text : (auth.email ?? 'hello@portfolio.ai'),
+      'location': _locationController.text.isNotEmpty ? _locationController.text : 'Remote',
+      'profile_photo_url': _photoUrl,
+      'about_me': 'Experienced professional creating digital products and building scalable codebases.',
+      'skills': ['Flutter', 'Python', 'FastAPI', 'HTML', 'CSS', 'JavaScript'],
       'experience': [
         {
-          'company': 'Company Inc.',
-          'role': _title,
-          'start_date': '2023',
+          'company': 'Tech Corp',
+          'role': _titleController.text.isNotEmpty ? _titleController.text : 'Engineer',
+          'start_date': '2024',
           'end_date': 'Present',
-          'description': 'Designed and implemented full-stack cloud workflows.',
-          'skills_used': _skills,
+          'description': 'Engineered cloud native products and responsive web applications.',
+          'skills_used': ['Flutter', 'Python', 'FastAPI'],
         }
       ],
       'projects': [
         {
-          'title': 'Autonomous AI Agent System',
-          'description': 'Constructed real-time agent workflow orchestration schemas.',
-          'technologies': _skills,
+          'title': 'AI Agent Compiler',
+          'description': 'Orchestrated compiler backend pipelines utilizing Gemini LLM.',
+          'technologies': ['Python', 'FastAPI'],
         }
       ]
     };
@@ -263,7 +164,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       'primary_color': _primaryColor,
       'secondary_color': _secondaryColor,
       'font': 'Inter',
-      'inspiration_description': 'Interactive conversational engineering design.',
+      'inspiration_description': 'Professional step-based onboarding build.',
     };
 
     Navigator.pushNamed(context, '/wizard');
@@ -281,169 +182,351 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AI Portfolio Engineer', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Setup Portfolio Wizard', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        actions: [
+          TextButton(
+            onPressed: _skipAllAndDeploy,
+            child: const Text('Skip & Build', style: TextStyle(color: AppTheme.neonCyan)),
+          ),
+        ],
       ),
-      body: Row(
-        children: [
-          // Chat Main Panel
-          Expanded(
-            flex: 3,
-            child: Column(
-              children: [
-                Expanded(
-                  child: ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _messages.length,
-                    itemBuilder: (context, index) {
-                      final msg = _messages[index];
-                      return _buildChatBubble(msg);
-                    },
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              child: _buildProgressIndicator(),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 600),
+                    child: GlassCard(
+                      padding: const EdgeInsets.all(24),
+                      child: _buildStepContent(),
+                    ),
                   ),
                 ),
-                _buildInputBar(),
-              ],
-            ),
-          ),
-          // side details visualization panel on larger screens
-          if (MediaQuery.of(context).size.width > 800)
-            Expanded(
-              flex: 1,
-              child: Container(
-                decoration: BoxDecoration(
-                  border: const Border(left: BorderSide(color: AppTheme.glassBorder)),
-                  color: Colors.white.withOpacity(0.01),
-                ),
-                padding: const EdgeInsets.all(20),
-                child: _buildCollectedSummaryPanel(),
               ),
             ),
-        ],
+            _buildBottomNav(),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildChatBubble(ChatMessage message) {
-    final align = message.isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start;
-    final bubbleColor = message.isUser ? AppTheme.neonPurple.withOpacity(0.2) : AppTheme.glassCardBg;
-    final textColor = message.isUser ? Colors.white : Colors.white.withOpacity(0.9);
-    
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: Column(
-        crossAxisAlignment: align,
-        children: [
-          Row(
-            mainAxisAlignment: message.isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+  Widget _buildProgressIndicator() {
+    final steps = ['Resume', 'Basic Info', 'Aesthetic'];
+    return Row(
+      children: List.generate(steps.length, (index) {
+        final isActive = _currentStep == index;
+        final isCompleted = _currentStep > index;
+        return Expanded(
+          child: Row(
             children: [
-              if (!message.isUser) ...[
-                const CircleAvatar(
-                  backgroundColor: AppTheme.neonCyan,
-                  radius: 14,
-                  child: Icon(Icons.auto_awesome, color: Colors.black, size: 14),
-                ),
-                const SizedBox(width: 8),
-              ],
-              Flexible(
-                child: GlassCard(
-                  color: bubbleColor,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        message.text,
-                        style: TextStyle(color: textColor, fontSize: 14),
+              CircleAvatar(
+                radius: 12,
+                backgroundColor: isActive
+                    ? AppTheme.neonCyan
+                    : isCompleted
+                        ? AppTheme.neonPurple
+                        : Colors.white10,
+                child: isCompleted
+                    ? const Icon(Icons.check, size: 12, color: Colors.white)
+                    : Text(
+                        '${index + 1}',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: isActive ? Colors.black : Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      if (message.customWidget != null) message.customWidget!,
-                    ],
-                  ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                steps[index],
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                  color: isActive ? AppTheme.neonCyan : Colors.white60,
                 ),
               ),
+              if (index < steps.length - 1)
+                const Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Divider(color: Colors.white10, thickness: 1),
+                  ),
+                ),
             ],
           ),
-        ],
-      ),
+        );
+      }),
     );
   }
 
-  Widget _buildInputBar() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: AppTheme.glassBorder)),
-        color: AppTheme.darkBg,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _textController,
-              decoration: const InputDecoration(
-                hintText: 'Type your message...',
-                border: InputBorder.none,
-              ),
-              onSubmitted: _handleUserMessage,
-            ),
-          ),
-          IconButton(
-            onPressed: () => _handleUserMessage(_textController.text),
-            icon: const Icon(Icons.send, color: AppTheme.neonCyan),
-          ),
-        ],
-      ),
-    );
+  Widget _buildStepContent() {
+    switch (_currentStep) {
+      case 0:
+        return _buildResumeStep();
+      case 1:
+        return _buildBasicInfoStep();
+      case 2:
+        return _buildThemeStep();
+      default:
+        return Container();
+    }
   }
 
-  Widget _buildCollectedSummaryPanel() {
+  Widget _buildResumeStep() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Engineering Snapshot',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.neonCyan),
+          'Upload Resume (Optional)',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.neonCyan),
         ),
-        const SizedBox(height: 24),
-        _buildSummaryItem('Name', _fullName, Icons.person),
-        _buildSummaryItem('Title', _title, Icons.badge),
-        _buildSummaryItem('Email', _email, Icons.email),
-        _buildSummaryItem('Resume', _resumeName ?? 'None', Icons.description),
-        _buildSummaryItem('Template', _selectedTemplate, Icons.palette),
-        const SizedBox(height: 20),
-        const Text('Skills:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.white54)),
         const SizedBox(height: 8),
-        Wrap(
-          spacing: 4,
-          runSpacing: 4,
-          children: _skills.map((s) => Chip(
-            label: Text(s, style: const TextStyle(fontSize: 10)),
-            padding: EdgeInsets.zero,
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          )).toList(),
+        const Text(
+          'Upload your resume (PDF/TXT) to instantly auto-fill all profile sections, skills, work experiences, and projects.',
+          style: TextStyle(fontSize: 14, color: Colors.white70),
+        ),
+        const SizedBox(height: 32),
+        Center(
+          child: InkWell(
+            onTap: _pickResume,
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              width: double.infinity,
+              height: 200,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppTheme.neonCyan.withOpacity(0.5), width: 2, style: BorderStyle.solid),
+                color: Colors.white.withOpacity(0.02),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.cloud_upload_outlined, size: 64, color: AppTheme.neonCyan),
+                  const SizedBox(height: 16),
+                  Text(
+                    _resumeName ?? 'Click to upload PDF or TXT Resume',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                  if (_resumeName == null) ...[
+                    const SizedBox(height: 8),
+                    const Text('Drag & drop supported on web/desktop', style: TextStyle(fontSize: 11, color: Colors.white38)),
+                  ]
+                ],
+              ),
+            ),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildSummaryItem(String label, String value, IconData icon) {
-    final hasValue = value.isNotEmpty && value != 'None';
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: hasValue ? AppTheme.neonCyan : Colors.white24),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildBasicInfoStep() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Basic Information',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.neonCyan),
+        ),
+        const SizedBox(height: 24),
+        Center(
+          child: Stack(
+            alignment: Alignment.bottomRight,
             children: [
-              Text(label, style: const TextStyle(color: Colors.white38, fontSize: 10)),
-              Text(
-                hasValue ? value : 'Awaiting interview...',
-                style: TextStyle(color: hasValue ? Colors.white : Colors.white24, fontSize: 12),
+              CircleAvatar(
+                radius: 48,
+                backgroundColor: AppTheme.glassCardBg,
+                backgroundImage: _photoBytes != null ? MemoryImage(_photoBytes!) : null,
+                child: _photoBytes == null
+                    ? const Icon(Icons.person_outline, size: 48, color: Colors.white30)
+                    : null,
               ),
+              CircleAvatar(
+                radius: 16,
+                backgroundColor: AppTheme.neonCyan,
+                child: IconButton(
+                  icon: const Icon(Icons.camera_alt, size: 14, color: Colors.black),
+                  onPressed: _pickPhoto,
+                ),
+              )
             ],
+          ),
+        ),
+        if (_isUploadingPhoto) ...[
+          const SizedBox(height: 8),
+          const Center(child: SizedBox(width: 100, child: LinearProgressIndicator(color: AppTheme.neonCyan))),
+        ],
+        if (_photoBeforeSize != null && _photoAfterSize != null) ...[
+          const SizedBox(height: 8),
+          Center(
+            child: Text(
+              'Before: ${(_photoBeforeSize! / 1024).toStringAsFixed(1)} KB | Compressed: ${(_photoAfterSize! / 1024).toStringAsFixed(1)} KB',
+              style: const TextStyle(fontSize: 11, color: Colors.greenAccent, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+        const SizedBox(height: 24),
+        TextField(
+          controller: _nameController,
+          decoration: const InputDecoration(
+            labelText: 'Full Name',
+            prefixIcon: Icon(Icons.person_outline),
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _titleController,
+          decoration: const InputDecoration(
+            labelText: 'Professional Title',
+            prefixIcon: Icon(Icons.badge_outlined),
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _emailController,
+          decoration: const InputDecoration(
+            labelText: 'Email Address',
+            prefixIcon: Icon(Icons.email_outlined),
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _locationController,
+          decoration: const InputDecoration(
+            labelText: 'Location / Base',
+            prefixIcon: Icon(Icons.map_outlined),
+            border: OutlineInputBorder(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildThemeStep() {
+    final templates = ['Minimal', 'Corporate', 'Creative', 'Dark'];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Select Design Aesthetic',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.neonCyan),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'Choose the layout aesthetic that matches your personal brand. You can fully customize color schemes and content later.',
+          style: TextStyle(fontSize: 14, color: Colors.white70),
+        ),
+        const SizedBox(height: 24),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: templates.map((t) {
+            final isSel = _selectedTemplate == t;
+            return ChoiceChip(
+              label: Text(t, style: TextStyle(color: isSel ? Colors.black : Colors.white)),
+              selected: isSel,
+              selectedColor: AppTheme.neonCyan,
+              backgroundColor: AppTheme.glassCardBg,
+              onSelected: (selected) {
+                if (selected) {
+                  setState(() {
+                    _selectedTemplate = t;
+                  });
+                }
+              },
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 32),
+        const Text(
+          'Brand Colors',
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white70),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: ListTile(
+                title: const Text('Primary', style: TextStyle(fontSize: 12)),
+                subtitle: const Text('Hex: #8B5CF6'),
+                leading: CircleAvatar(
+                  backgroundColor: AppTheme.neonPurple,
+                  radius: 16,
+                  border: Border.all(color: Colors.white24),
+                ),
+              ),
+            ),
+            Expanded(
+              child: ListTile(
+                title: const Text('Secondary', style: TextStyle(fontSize: 12)),
+                subtitle: const Text('Hex: #00FFCC'),
+                leading: CircleAvatar(
+                  backgroundColor: AppTheme.neonCyan,
+                  radius: 16,
+                  border: Border.all(color: Colors.white24),
+                ),
+              )
+            )
+          ],
+        )
+      ],
+    );
+  }
+
+  Widget _buildBottomNav() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: AppTheme.glassBorder)),
+        color: Colors.transparent,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          if (_currentStep > 0)
+            OutlinedButton(
+              onPressed: () {
+                setState(() {
+                  _currentStep--;
+                });
+              },
+              child: const Text('Back'),
+            )
+          else
+            TextButton(
+              onPressed: () => Navigator.pushReplacementNamed(context, '/dashboard'),
+              child: const Text('Skip Onboarding', style: TextStyle(color: Colors.white54)),
+            ),
+          ElevatedButton(
+            onPressed: () {
+              if (_currentStep < 2) {
+                setState(() {
+                  _currentStep++;
+                });
+              } else {
+                _submitOrchestration();
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.neonCyan,
+              foregroundColor: Colors.black,
+              fontWeight: FontWeight.bold,
+            ),
+            child: Text(_currentStep == 2 ? 'Assemble & Deploy' : 'Next'),
           ),
         ],
       ),

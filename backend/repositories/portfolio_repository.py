@@ -96,4 +96,42 @@ class PortfolioRepository:
             portfolios.append(res)
         return portfolios
 
+    def save_cv_version(self, user_id: str, portfolio_id: str, resume_url: str, version: int, created_at: str) -> None:
+        import uuid
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cv_id = f"cv_{uuid.uuid4().hex[:12]}"
+        cursor.execute("""
+            INSERT INTO cv_history (id, user_id, portfolio_id, version, resume_url, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (cv_id, user_id, portfolio_id, version, resume_url, created_at))
+        
+        # Keep only the last 3 versions
+        cursor.execute("""
+            SELECT id FROM cv_history 
+            WHERE user_id = ? 
+            ORDER BY created_at DESC
+        """, (user_id,))
+        rows = cursor.fetchall()
+        if len(rows) > 3:
+            for r in rows[3:]:
+                cursor.execute("DELETE FROM cv_history WHERE id = ?", (dict(r)["id"],))
+                
+        conn.commit()
+        conn.close()
+
+    def get_cv_history(self, user_id: str) -> List[dict]:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT * FROM cv_history 
+            WHERE user_id = ? 
+            ORDER BY created_at DESC 
+            LIMIT 3
+        """, (user_id,))
+        rows = cursor.fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
 portfolio_repository = PortfolioRepository()

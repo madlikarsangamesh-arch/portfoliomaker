@@ -53,6 +53,49 @@ class AppTheme {
     );
   }
 
+  // Curated Light Theme
+  static ThemeData get lightTheme {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+      colorScheme: const ColorScheme.light(
+        primary: neonPurple,
+        secondary: neonCyan,
+        tertiary: electricPink,
+        background: const Color(0xFFF8FAFC),
+        surface: const Color(0x0A000000),
+        onPrimary: Colors.white,
+      ),
+      textTheme: GoogleFonts.outfitTextTheme(ThemeData.light().textTheme).copyWith(
+        displayLarge: GoogleFonts.outfit(
+          fontSize: 32,
+          fontWeight: FontWeight.w800,
+          color: const Color(0xFF0F172A),
+          letterSpacing: -0.5,
+        ),
+        titleLarge: GoogleFonts.outfit(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: const Color(0xFF0F172A),
+        ),
+        bodyLarge: GoogleFonts.inter(
+          fontSize: 16,
+          fontWeight: FontWeight.w400,
+          color: const Color(0xFF334155),
+        ),
+      ),
+      cardTheme: const CardThemeData(
+        color: Color(0x05000000),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          side: BorderSide(color: Color(0x11000000), width: 1),
+          borderRadius: BorderRadius.all(Radius.circular(16)),
+        ),
+      ),
+    );
+  }
+
   // Neon Gradient Decoration helper
   static Decoration get glassDecoration {
     return BoxDecoration(

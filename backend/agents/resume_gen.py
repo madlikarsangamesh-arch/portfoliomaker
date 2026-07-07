@@ -22,43 +22,120 @@ class ResumeGeneratorAgent:
         """
         Generates an ATS-friendly HTML resume template.
         """
-        skills_str = ", ".join(profile.get("skills", []))
-        
+        # Skills details or fallback
+        skills_details = profile.get("skills_details", [])
+        if skills_details:
+            skills_str = ""
+            categories = {}
+            for s in skills_details:
+                cat = s.get("category", "Other")
+                if cat not in categories:
+                    categories[cat] = []
+                categories[cat].append(s.get("name"))
+            for cat, items in categories.items():
+                skills_str += f"<strong>{cat}:</strong> {', '.join(items)}<br>"
+        else:
+            skills_str = ", ".join(profile.get("skills", []))
+            
         experience_html = ""
         for exp in profile.get("experience", []):
+            dur = exp.get("duration") or f"{exp.get('start_date', '')} - {exp.get('end_date', '')}"
+            exp_type = f" ({exp.get('experience_type')})" if exp.get("experience_type") else ""
+            
+            resp_html = ""
+            if exp.get("responsibilities"):
+                resp_html = "<ul>"
+                for r in exp.get("responsibilities", []):
+                    resp_html += f"<li>{r}</li>"
+                resp_html += "</ul>"
+            else:
+                resp_html = f"<p>{exp.get('description', '')}</p>"
+                
+            tools_list = exp.get("tools") or exp.get("skills_used") or []
+            tools_str = f"<p><em>Tools: {', '.join(tools_list)}</em></p>" if tools_list else ""
+            
+            cert_str = f'<p><a href="{exp.get("certificate_link")}">View Certificate</a></p>' if exp.get("certificate_link") else ""
+            
             experience_html += f"""
             <div class="resume-item">
                 <div class="resume-header">
-                    <strong>{exp.get('role')}</strong> | {exp.get('company')}
-                    <span class="resume-date">{exp.get('start_date')} - {exp.get('end_date')}</span>
+                    <strong>{exp.get('role')}{exp_type}</strong> | {exp.get('company')}
+                    <span class="resume-date">{dur}</span>
                 </div>
-                <p>{exp.get('description')}</p>
+                {resp_html}
+                {tools_str}
+                {cert_str}
             </div>
             """
             
         education_html = ""
         for edu in profile.get("education", []):
+            dur_str = edu.get("duration") or f"Graduated {edu.get('graduation_year')}"
+            branch_str = f" in {edu.get('branch')}" if edu.get("branch") else f" in {edu.get('field_of_study')}"
+            course_str = f"<p><em>Coursework: {', '.join(edu.get('coursework', []))}</em></p>" if edu.get("coursework") else ""
+            
             education_html += f"""
             <div class="resume-item">
                 <div class="resume-header">
-                    <strong>{edu.get('degree')} in {edu.get('field_of_study')}</strong>
-                    <span class="resume-date">{edu.get('graduation_year')}</span>
+                    <strong>{edu.get('degree')}{branch_str}</strong>
+                    <span class="resume-date">{dur_str}</span>
                 </div>
                 <p>{edu.get('institution')}</p>
+                {course_str}
             </div>
             """
 
         projects_html = ""
         for proj in profile.get("projects", []):
             tech_str = ", ".join(proj.get("technologies", []))
+            role_str = f"<p><em>Role: {proj.get('role_or_teammates')}</em></p>" if proj.get("role_or_teammates") else ""
+            prob_str = f"<p><strong>Problem:</strong> {proj.get('problem_statement')}</p>" if proj.get("problem_statement") else ""
+            outcome_str = f"<p><strong>Outcome/Metrics:</strong> {proj.get('outcomes_or_metrics')}</p>" if proj.get("outcomes_or_metrics") else ""
+            
+            feat_html = ""
+            if proj.get("features"):
+                feat_html = "<ul>"
+                for f in proj.get("features", []):
+                    feat_html += f"<li>{f}</li>"
+                feat_html += "</ul>"
+                
             projects_html += f"""
             <div class="resume-item">
                 <div class="resume-header">
                     <strong>{proj.get('title')}</strong> ({tech_str})
                 </div>
-                <p>{proj.get('description')}</p>
+                {role_str}
+                {prob_str}
+                <p>{proj.get('description', '')}</p>
+                {feat_html}
+                {outcome_str}
             </div>
             """
+
+        extra_html = ""
+        if profile.get("extracurriculars"):
+            extra_html += '<div class="section-title">Extracurricular Activities & Leadership</div>'
+            for item in profile.get("extracurriculars", []):
+                extra_html += f"""
+                <div class="resume-item">
+                    <div class="resume-header">
+                        <strong>{item.get('role')}</strong> | {item.get('activity')}
+                        <span class="resume-date">{item.get('duration')}</span>
+                    </div>
+                    {f'<p><em>{item.get("organization")}</em></p>' if item.get("organization") else ''}
+                    <p>{item.get('description', '')}</p>
+                </div>
+                """
+
+        awards_html = ""
+        if profile.get("competitions") or profile.get("publications") or profile.get("scholarships"):
+            awards_html += '<div class="section-title">Honors & Achievements</div>'
+            if profile.get("competitions"):
+                awards_html += "<p><strong>Competitions:</strong> " + ", ".join(profile.get("competitions")) + "</p>"
+            if profile.get("publications"):
+                awards_html += "<p><strong>Publications:</strong> " + ", ".join(profile.get("publications")) + "</p>"
+            if profile.get("scholarships"):
+                awards_html += "<p><strong>Scholarships:</strong> " + ", ".join(profile.get("scholarships")) + "</p>"
 
         html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -117,6 +194,8 @@ class ResumeGeneratorAgent:
         {f'LinkedIn: ' + profile.get('linkedin') if profile.get('linkedin') else ''} | {f'GitHub: ' + profile.get('github') if profile.get('github') else ''}
     </div>
     
+    {f'<div class="section-title">Career Objective</div><p>' + profile.get('career_objective') + '</p>' if profile.get('career_objective') else ''}
+    
     <div class="section-title">Professional Summary</div>
     <p>{profile.get('about_me')}</p>
     
@@ -131,6 +210,10 @@ class ResumeGeneratorAgent:
     
     <div class="section-title">Education</div>
     {education_html}
+    
+    {extra_html}
+    
+    {awards_html}
 </body>
 </html>
 """

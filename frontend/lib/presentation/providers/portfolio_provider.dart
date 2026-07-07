@@ -14,6 +14,7 @@ class PortfolioState {
   final String? generatedUrl;
   final String? resumeUrl;
   final Map<String, dynamic>? recruiterScorecard;
+  final List<dynamic> cvHistory;
 
   PortfolioState({
     this.portfolios = const [],
@@ -24,6 +25,7 @@ class PortfolioState {
     this.generatedUrl,
     this.resumeUrl,
     this.recruiterScorecard,
+    this.cvHistory = const [],
   });
 
   PortfolioState copyWith({
@@ -35,6 +37,7 @@ class PortfolioState {
     String? generatedUrl,
     String? resumeUrl,
     Map<String, dynamic>? recruiterScorecard,
+    List<dynamic>? cvHistory,
   }) {
     return PortfolioState(
       portfolios: portfolios ?? this.portfolios,
@@ -45,6 +48,7 @@ class PortfolioState {
       generatedUrl: generatedUrl ?? this.generatedUrl,
       resumeUrl: resumeUrl ?? this.resumeUrl,
       recruiterScorecard: recruiterScorecard ?? this.recruiterScorecard,
+      cvHistory: cvHistory ?? this.cvHistory,
     );
   }
 }
@@ -198,6 +202,93 @@ class PortfolioNotifier extends StateNotifier<PortfolioState> {
       return step;
     }).toList();
     state = state.copyWith(pipelineSteps: list);
+  }
+
+  Future<bool> savePortfolioData({
+    required String portfolioId,
+    required String userId,
+    required Map<String, dynamic> profile,
+    required Map<String, dynamic> design,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${AppConstants.baseApiUrl}/portfolios/save'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'portfolio_id': portfolioId,
+          'user_id': userId,
+          'profile': profile,
+          'design': design,
+        }),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<Map<String, dynamic>?> uploadImage({
+    required Uint8List bytes,
+    required String filename,
+    String folder = "images",
+  }) async {
+    try {
+      final uri = Uri.parse('${AppConstants.baseApiUrl}/portfolios/upload-image');
+      final request = http.MultipartRequest('POST', uri);
+      request.fields['folder'] = folder;
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'file',
+          bytes,
+          filename: filename,
+        ),
+      );
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+    } catch (e) {
+      // fail silently
+    }
+    return null;
+  }
+
+  Future<String?> polishText({
+    required String text,
+    String context = "",
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${AppConstants.baseApiUrl}/portfolios/ai-polish'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'text': text,
+          'context': context,
+        }),
+      );
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['polished_text'];
+      }
+    } catch (e) {
+      // fail silently
+    }
+    return null;
+  }
+
+  Future<void> loadCvHistory(String userId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('${AppConstants.baseApiUrl}/portfolios/cv-history/$userId'),
+      );
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body) as List;
+        state = state.copyWith(cvHistory: data);
+      }
+    } catch (e) {
+      // fail silently
+    }
   }
 }
 

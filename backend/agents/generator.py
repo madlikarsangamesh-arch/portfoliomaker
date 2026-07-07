@@ -471,15 +471,17 @@ footer {{
             nav_html += f'<li><a href="{nav["anchor"]}">{nav["label"]}</a></li>\n'
             
         sections_html = ""
-        sections = design_plan.get("sections", ["home", "about", "skills", "experience", "projects", "education", "certifications", "contact"])
+        sections = design_plan.get("sections", ["home", "about", "skills", "experience", "projects", "education", "certifications", "extracurriculars", "testimonials", "blogs", "contact"])
         
         for section in sections:
-            if section == "about":
+            if section == "about" and (profile.get('about_me') or profile.get('career_objective')):
+                career_obj_html = f'<p style="font-size: 1.1rem; font-style: italic; opacity: 0.9; margin-bottom: 1.5rem; color: var(--primary);"><strong>Objective:</strong> {profile.get("career_objective")}</p>' if profile.get("career_objective") else ""
                 sections_html += f"""
                 <section id="about">
                     <h2 class="section-title"><i data-lucide="user"></i> About Me</h2>
                     <div class="glass" style="padding: 2.5rem; border-radius: 20px;">
-                        <p style="font-size: 1.15rem; margin-bottom: 2rem;">{profile.get('about_me')}</p>
+                        {career_obj_html}
+                        <p style="font-size: 1.15rem; margin-bottom: 2rem;">{profile.get('about_me', '')}</p>
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem;">
                             <div>
                                 <h4 style="margin-bottom: 0.5rem; color: var(--primary);">Location</h4>
@@ -491,38 +493,87 @@ footer {{
                     </div>
                 </section>
                 """
-            elif section == "skills":
-                skills_html = ""
-                for skill in profile.get("skills", []):
-                    icon_name = skills_icons.get(skill, "code")
-                    skills_html += f"""
-                    <div class="skill-card glass">
-                        <i data-lucide="{icon_name}"></i>
-                        <span>{skill}</span>
-                    </div>
-                    """
+            elif section == "skills" and (profile.get("skills_details") or profile.get("skills")):
+                skills_details = profile.get("skills_details", [])
+                if skills_details:
+                    categories = {}
+                    for s in skills_details:
+                        cat = s.get("category", "Other")
+                        if cat not in categories:
+                            categories[cat] = []
+                        categories[cat].append(s)
+                    
+                    skills_html = ""
+                    for cat, items in categories.items():
+                        items_html = ""
+                        for item in items:
+                            icon = item.get("icon") or skills_icons.get(item.get("name"), "code")
+                            prof = f'<span style="font-size: 0.8rem; opacity: 0.6; display: block; margin-top: 0.25rem;">{item.get("proficiency")}</span>' if item.get("proficiency") else ""
+                            items_html += f"""
+                            <div class="skill-card glass" style="display: flex; flex-direction: column; align-items: center; padding: 1.25rem; border-radius: 12px; min-width: 110px; text-align: center;">
+                                <i data-lucide="{icon}"></i>
+                                <span style="font-weight: 600; font-size: 0.9rem; margin-top: 0.5rem;">{item.get("name")}</span>
+                                {prof}
+                            </div>
+                            """
+                        skills_html += f"""
+                        <div class="skill-category" style="margin-bottom: 2.5rem;">
+                            <h3 style="margin-bottom: 1.25rem; color: var(--primary); text-transform: capitalize; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">{cat}</h3>
+                            <div style="display: flex; flex-wrap: wrap; gap: 1rem;">
+                                {items_html}
+                            </div>
+                        </div>
+                        """
+                else:
+                    skills_html = '<div style="display: flex; flex-wrap: wrap; gap: 1rem;">'
+                    for skill in profile.get("skills", []):
+                        icon_name = skills_icons.get(skill, "code")
+                        skills_html += f"""
+                        <div class="skill-card glass">
+                            <i data-lucide="{icon_name}"></i>
+                            <span>{skill}</span>
+                        </div>
+                        """
+                    skills_html += '</div>'
+
                 sections_html += f"""
                 <section id="skills">
                     <h2 class="section-title"><i data-lucide="cpu"></i> Technical Skills</h2>
-                    <div class="skills-grid">
+                    <div class="skills-wrapper">
                         {skills_html}
                     </div>
                 </section>
                 """
-            elif section == "experience":
+            elif section == "experience" and profile.get("experience"):
                 exp_html = ""
                 for exp in profile.get("experience", []):
-                    skills_used_tags = ""
-                    for sk in exp.get("skills_used", []):
-                        skills_used_tags += f'<span class="tech-tag">{sk}</span>'
+                    tools_html = ""
+                    tools_list = exp.get("tools") or exp.get("skills_used") or []
+                    for t in tools_list:
+                        tools_html += f'<span class="tech-tag">{t}</span>'
+                    
+                    resp_html = ""
+                    if exp.get("responsibilities"):
+                        resp_html = '<ul style="margin: 1rem 0 1rem 1.5rem; list-style-type: disc; opacity: 0.9; font-size: 0.95rem;">'
+                        for resp in exp.get("responsibilities", []):
+                            resp_html += f'<li style="margin-bottom: 0.5rem;">{resp}</li>'
+                        resp_html += '</ul>'
+                    else:
+                        resp_html = f'<p style="opacity: 0.9; margin-bottom: 1rem; font-size: 0.95rem;">{exp.get("description", "")}</p>'
+                    
+                    dur = exp.get("duration") or f"{exp.get('start_date', '')} - {exp.get('end_date', '')}"
+                    exp_type = f'<span class="tech-tag" style="background: var(--primary); color: #09090b; font-weight: bold; border: none;">{exp.get("experience_type")}</span>' if exp.get("experience_type") else ""
+                    cert_link = f'<a href="{exp.get("certificate_link")}" target="_blank" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; margin-top: 0.5rem;"><i data-lucide="award" style="width: 14px; height: 14px;"></i> View Certificate</a>' if exp.get("certificate_link") else ""
+                    
                     exp_html += f"""
                     <div class="timeline-item">
-                        <div class="timeline-date">{exp.get('start_date')} - {exp.get('end_date')}</div>
+                        <div class="timeline-date">{dur} {exp_type}</div>
                         <div class="timeline-card glass">
-                            <h3 style="margin-bottom: 0.25rem;">{exp.get('role')}</h3>
+                            <h3 style="margin-bottom: 0.25rem; font-size: 1.3rem;">{exp.get('role')}</h3>
                             <h4 style="color: var(--primary); font-weight: 500; margin-bottom: 1rem;">{exp.get('company')}</h4>
-                            <p style="opacity: 0.9; margin-bottom: 1rem;">{exp.get('description')}</p>
-                            <div class="project-tech">{skills_used_tags}</div>
+                            {resp_html}
+                            <div class="project-tech">{tools_html}</div>
+                            {cert_link}
                         </div>
                     </div>
                     """
@@ -534,7 +585,7 @@ footer {{
                     </div>
                 </section>
                 """
-            elif section == "projects":
+            elif section == "projects" and profile.get("projects"):
                 proj_html = ""
                 for proj in profile.get("projects", []):
                     tech_tags = ""
@@ -547,15 +598,38 @@ footer {{
                     if proj.get("github_link"):
                         links_html += f'<a href="{proj.get("github_link")}" target="_blank" class="btn btn-secondary" style="padding: 0.4rem 1rem; font-size: 0.85rem;"><i data-lucide="github" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;"></i> Source</a>'
 
+                    role_str = f'<p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 0.5rem;"><strong>Role:</strong> {proj.get("role_or_teammates")}</p>' if proj.get("role_or_teammates") else ""
+                    prob_str = f'<p style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 1rem; font-style: italic;"><strong>Problem:</strong> {proj.get("problem_statement")}</p>' if proj.get("problem_statement") else ""
+                    outcome_str = f'<p style="font-size: 0.9rem; margin-top: 1rem; color: var(--primary);"><strong>Outcome:</strong> {proj.get("outcomes_or_metrics")}</p>' if proj.get("outcomes_or_metrics") else ""
+                    
+                    screenshot_html = ""
+                    if proj.get("screenshots"):
+                        screenshot_html = '<div class="screenshot-gallery" style="display: flex; gap: 0.5rem; overflow-x: auto; margin-bottom: 1rem; padding-bottom: 0.5rem; scroll-snap-type: x mandatory;">'
+                        for img in proj.get("screenshots", []):
+                            screenshot_html += f'<img src="{img}" style="height: 120px; border-radius: 8px; border: 1px solid var(--border); object-fit: cover; scroll-snap-align: start;">'
+                        screenshot_html += '</div>'
+
+                    features_html = ""
+                    if proj.get("features"):
+                        features_html = '<ul style="margin: 0.5rem 0 1rem 1.25rem; list-style-type: square; opacity: 0.85; font-size: 0.85rem;">'
+                        for feat in proj.get("features", []):
+                            features_html += f'<li>{feat}</li>'
+                        features_html += '</ul>'
+
                     proj_html += f"""
                     <div class="project-card glass">
                         <div class="project-body">
-                            <h3 class="project-title">{proj.get('title')}</h3>
-                            <p class="project-desc">{proj.get('description')}</p>
+                            <h3 class="project-title" style="font-size: 1.4rem; font-weight: 700; margin-bottom: 0.5rem;">{proj.get('title')}</h3>
+                            {role_str}
+                            {prob_str}
+                            <p class="project-desc">{proj.get('description', '')}</p>
+                            {features_html}
+                            {screenshot_html}
                             <div class="project-tech">
                                 {tech_tags}
                             </div>
-                            <div class="project-links">
+                            {outcome_str}
+                            <div class="project-links" style="margin-top: 1.25rem;">
                                 {links_html}
                             </div>
                         </div>
@@ -569,15 +643,23 @@ footer {{
                     </div>
                 </section>
                 """
-            elif section == "education":
+            elif section == "education" and profile.get("education"):
                 edu_html = ""
                 for edu in profile.get("education", []):
+                    branch_str = f' &middot; {edu.get("branch")}' if edu.get("branch") else f' &middot; {edu.get("field_of_study")}'
+                    dur_str = edu.get("duration") or f"Graduated {edu.get('graduation_year')}"
+                    
+                    course_html = ""
+                    if edu.get("coursework"):
+                        course_html = f'<p style="margin-top: 0.5rem; opacity: 0.7; font-size: 0.85rem;"><strong>Coursework:</strong> ' + ", ".join(edu.get("coursework", [])) + '</p>'
+                    
                     edu_html += f"""
                     <div class="glass" style="padding: 1.75rem; border-radius: 16px; margin-bottom: 1.5rem;">
-                        <span style="font-weight: 600; color: var(--primary); font-size: 0.9rem;">Graduated {edu.get('graduation_year')}</span>
-                        <h3 style="margin: 0.25rem 0; font-size: 1.25rem;">{edu.get('degree')} in {edu.get('field_of_study')}</h3>
+                        <span style="font-weight: 600; color: var(--primary); font-size: 0.9rem;">{dur_str}</span>
+                        <h3 style="margin: 0.25rem 0; font-size: 1.25rem;">{edu.get('degree')}{branch_str}</h3>
                         <h4 style="font-weight: 500; opacity: 0.8;">{edu.get('institution')}</h4>
-                        {f'<p style="margin-top: 0.5rem; opacity: 0.7;">GPA: ' + edu.get('gpa') + '</p>' if edu.get('gpa') else ''}
+                        {f'<p style="margin-top: 0.5rem; opacity: 0.7; font-weight: 600;">Grade/CGPA: ' + edu.get('gpa') + '</p>' if edu.get('gpa') else ''}
+                        {course_html}
                     </div>
                     """
                 sections_html += f"""
@@ -588,7 +670,7 @@ footer {{
                     </div>
                 </section>
                 """
-            elif section == "certifications" and profile.get("certifications"):
+            elif section == "certifications" and (profile.get("certifications") or profile.get("competitions") or profile.get("publications") or profile.get("scholarships")):
                 cert_html = ""
                 for cert in profile.get("certifications", []):
                     cert_html += f"""
@@ -600,11 +682,86 @@ footer {{
                         {f'<a href="' + cert.get('link') + '" target="_blank" class="btn btn-secondary" style="padding: 0.4rem 1rem; font-size: 0.8rem;"><i data-lucide="award"></i> View</a>' if cert.get('link') else ''}
                     </div>
                     """
+                
+                extra_awards_html = ""
+                if profile.get("competitions"):
+                    extra_awards_html += '<div style="margin-top: 1.5rem;"><h4>Competitions</h4><ul style="margin-left: 1.5rem; opacity: 0.85;">'
+                    for c in profile.get("competitions", []):
+                        extra_awards_html += f'<li>{c}</li>'
+                    extra_awards_html += '</ul></div>'
+                if profile.get("publications"):
+                    extra_awards_html += '<div style="margin-top: 1.5rem;"><h4>Publications</h4><ul style="margin-left: 1.5rem; opacity: 0.85;">'
+                    for p in profile.get("publications", []):
+                        extra_awards_html += f'<li>{p}</li>'
+                    extra_awards_html += '</ul></div>'
+                if profile.get("scholarships"):
+                    extra_awards_html += '<div style="margin-top: 1.5rem;"><h4>Scholarships</h4><ul style="margin-left: 1.5rem; opacity: 0.85;">'
+                    for s in profile.get("scholarships", []):
+                        extra_awards_html += f'<li>{s}</li>'
+                    extra_awards_html += '</ul></div>'
+
                 sections_html += f"""
                 <section id="certifications">
-                    <h2 class="section-title"><i data-lucide="award"></i> Certifications</h2>
+                    <h2 class="section-title"><i data-lucide="award"></i> Certifications & Achievements</h2>
                     <div>
                         {cert_html}
+                        {extra_awards_html}
+                    </div>
+                </section>
+                """
+            elif section == "extracurriculars" and profile.get("extracurriculars"):
+                extra_html = ""
+                for item in profile.get("extracurriculars", []):
+                    extra_html += f"""
+                    <div class="glass" style="padding: 1.75rem; border-radius: 16px; margin-bottom: 1.5rem;">
+                        <span style="font-weight: 600; color: var(--primary); font-size: 0.9rem;">{item.get('duration')}</span>
+                        <h3 style="margin: 0.25rem 0; font-size: 1.25rem;">{item.get('role')} at {item.get('activity')}</h3>
+                        {f'<h4 style="font-weight: 500; opacity: 0.8; margin-bottom: 0.5rem;">{item.get("organization")}</h4>' if item.get("organization") else ''}
+                        <p style="opacity: 0.7;">{item.get('description', '')}</p>
+                    </div>
+                    """
+                sections_html += f"""
+                <section id="extracurriculars">
+                    <h2 class="section-title"><i data-lucide="users"></i> Extracurriculars & Leadership</h2>
+                    <div>
+                        {extra_html}
+                    </div>
+                </section>
+                """
+            elif section == "testimonials" and profile.get("testimonials"):
+                test_html = ""
+                for item in profile.get("testimonials", []):
+                    test_html += f"""
+                    <div class="glass" style="padding: 1.75rem; border-radius: 16px; margin-bottom: 1.5rem;">
+                        <p style="font-style: italic; font-size: 1.1rem; margin-bottom: 1rem;">"{item.get('quote')}"</p>
+                        <h4 style="margin: 0; font-size: 1rem; color: var(--primary);">{item.get('name')}</h4>
+                        <p style="opacity: 0.7; font-size: 0.85rem;">{item.get('designation', '')} &middot; {item.get('relation', '')}</p>
+                    </div>
+                    """
+                sections_html += f"""
+                <section id="testimonials">
+                    <h2 class="section-title"><i data-lucide="message-square"></i> Testimonials</h2>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+                        {test_html}
+                    </div>
+                </section>
+                """
+            elif section == "blogs" and profile.get("blogs"):
+                blog_html = ""
+                for item in profile.get("blogs", []):
+                    blog_html += f"""
+                    <div class="glass" style="padding: 1.75rem; border-radius: 16px; margin-bottom: 1.5rem;">
+                        <span style="font-size: 0.85rem; opacity: 0.6;">{item.get('date')}</span>
+                        <h3 style="margin: 0.25rem 0 0.5rem 0; font-size: 1.25rem;"><a href="{item.get('link')}" target="_blank" style="color:var(--text); text-decoration:none; transition:var(--transition);">{item.get('title')}</a></h3>
+                        <p style="opacity: 0.8; margin-bottom: 1rem;">{item.get('summary', '')}</p>
+                        <a href="{item.get('link')}" target="_blank" style="color: var(--primary); text-decoration: none; font-weight: 600; font-size: 0.9rem;">Read Article &rarr;</a>
+                    </div>
+                    """
+                sections_html += f"""
+                <section id="blogs">
+                    <h2 class="section-title"><i data-lucide="book-open"></i> Publications & Articles</h2>
+                    <div>
+                        {blog_html}
                     </div>
                 </section>
                 """
@@ -615,6 +772,28 @@ footer {{
             image_html = f'<img src="{photo_url}" alt="{profile.get("full_name")}">'
         else:
             image_html = f'<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg, var(--primary), var(--secondary)); color:#111115; font-size:4rem; font-weight:800;">{profile.get("full_name")[0] if profile.get("full_name") else "P"}</div>'
+
+        avail_status = profile.get("availability_status")
+        avail_badge = f'<div style="display:inline-flex; align-items:center; gap:0.5rem; background:rgba(0,255,204,0.1); border:1px solid var(--primary); color:var(--primary); padding:0.25rem 0.75rem; border-radius:20px; font-size:0.85rem; font-weight:600; margin-bottom:1.5rem;"><span style="width:8px; height:8px; background:var(--primary); border-radius:50%; display:inline-block; animation: pulse 2s infinite;"></span>{avail_status}</div><br>' if avail_status else ""
+
+        socials_html = '<div style="display:flex; gap:1.25rem; margin-top:2rem; font-size:1.5rem;">'
+        if profile.get("github"):
+            socials_html += f'<a href="{profile.get("github")}" target="_blank" style="color:var(--text); opacity:0.8; transition:var(--transition);"><i data-lucide="github"></i></a>'
+        if profile.get("linkedin"):
+            socials_html += f'<a href="{profile.get("linkedin")}" target="_blank" style="color:var(--text); opacity:0.8; transition:var(--transition);"><i data-lucide="linkedin"></i></a>'
+        for name, link in profile.get("social_links", {}).items():
+            icon = "link"
+            n_low = name.lower()
+            if "twitter" in n_low or "x.com" in n_low:
+                icon = "twitter"
+            elif "instagram" in n_low:
+                icon = "instagram"
+            elif "youtube" in n_low:
+                icon = "youtube"
+            elif "facebook" in n_low:
+                icon = "facebook"
+            socials_html += f'<a href="{link}" target="_blank" style="color:var(--text); opacity:0.8; transition:var(--transition);"><i data-lucide="{icon}"></i></a>'
+        socials_html += '</div>'
 
         html_content = f"""<!DOCTYPE html>
 <html lang="en">
@@ -629,6 +808,13 @@ footer {{
     <meta property="og:type" content="website">
     
     <link rel="stylesheet" href="style.css">
+    <style>
+        @keyframes pulse {{
+            0% {{ transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 204, 0.7); }}
+            70% {{ transform: scale(1); box-shadow: 0 0 0 6px rgba(0, 255, 204, 0); }}
+            100% {{ transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 204, 0); }}
+        }}
+    </style>
 </head>
 <body>
     <header id="header">
@@ -646,12 +832,14 @@ footer {{
     <section class="hero" id="home">
         <div class="hero-container">
             <div class="hero-content">
+                {avail_badge}
                 <h1 class="hero-title">Hi, I'm <span>{profile.get('full_name')}</span></h1>
                 <p class="hero-tagline">{profile.get('tagline')}</p>
                 <div class="hero-buttons">
                     <a href="#contact" class="btn btn-primary">Hire Me</a>
                     {f'<a href="' + profile.get('resume_url', '#') + '" download class="btn btn-secondary" id="downloadResume"><i data-lucide="download"></i> Download Resume</a>' if profile.get('resume_url') else ''}
                 </div>
+                {socials_html}
             </div>
             <div class="hero-image-container">
                 {image_html}
@@ -756,3 +944,4 @@ document.addEventListener("DOMContentLoaded", () => {
         return html_content, css_content, js_content
 
 generator_agent = GeneratorAgent()
+

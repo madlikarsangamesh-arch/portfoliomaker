@@ -9,6 +9,12 @@ class ExperienceItem(BaseModel):
     end_date: str
     description: str
     skills_used: Optional[List[str]] = []
+    duration: Optional[str] = None
+    experience_type: Optional[str] = "Job"
+    responsibilities: Optional[List[str]] = []
+    tools: Optional[List[str]] = []
+    certificate_link: Optional[str] = None
+
 
 class ProjectItem(BaseModel):
     title: str
@@ -16,6 +22,12 @@ class ProjectItem(BaseModel):
     technologies: List[str]
     link: Optional[str] = None
     github_link: Optional[str] = None
+    problem_statement: Optional[str] = None
+    role_or_teammates: Optional[str] = None
+    features: Optional[List[str]] = []
+    screenshots: Optional[List[str]] = []
+    outcomes_or_metrics: Optional[str] = None
+
 
 class EducationItem(BaseModel):
     institution: str
@@ -23,6 +35,11 @@ class EducationItem(BaseModel):
     field_of_study: str
     graduation_year: str
     gpa: Optional[str] = None
+    branch: Optional[str] = None
+    duration: Optional[str] = None
+    coursework: Optional[List[str]] = []
+    education_type: Optional[str] = "college"
+
 
 class CertificationItem(BaseModel):
     name: str
@@ -34,6 +51,31 @@ class AchievementItem(BaseModel):
     title: str
     description: str
     date: str
+
+class SkillItem(BaseModel):
+    name: str
+    category: str
+    proficiency: Optional[str] = None
+    icon: Optional[str] = None
+
+class ExtracurricularItem(BaseModel):
+    activity: str
+    role: str
+    organization: Optional[str] = None
+    duration: Optional[str] = None
+    description: Optional[str] = None
+
+class TestimonialItem(BaseModel):
+    quote: str
+    name: str
+    designation: Optional[str] = None
+    relation: Optional[str] = None
+
+class BlogItem(BaseModel):
+    title: str
+    date: str
+    summary: Optional[str] = None
+    link: str
 
 # Core User Profile Data
 class UserProfile(BaseModel):
@@ -56,6 +98,16 @@ class UserProfile(BaseModel):
     linkedin: Optional[str] = None
     portfolio_url: Optional[str] = None
     resume_path: Optional[str] = None
+    availability_status: Optional[str] = None
+    career_objective: Optional[str] = None
+    skills_details: Optional[List[SkillItem]] = []
+    competitions: Optional[List[str]] = []
+    publications: Optional[List[str]] = []
+    scholarships: Optional[List[str]] = []
+    extracurriculars: Optional[List[ExtracurricularItem]] = []
+    testimonials: Optional[List[TestimonialItem]] = []
+    blogs: Optional[List[BlogItem]] = []
+    social_links: Optional[Dict[str, str]] = {}
 
 # Design Preferences
 class DesignPreferences(BaseModel):
@@ -71,6 +123,9 @@ class DesignPreferences(BaseModel):
     inspiration_description: Optional[str] = None
     inspiration_url: Optional[str] = None
     inspiration_image_path: Optional[str] = None
+    portfolio_template: Optional[str] = "minimal"
+    cv_template: Optional[str] = "classic"
+
 
 # Recruiter Score Card
 class RecruiterScoreCard(BaseModel):

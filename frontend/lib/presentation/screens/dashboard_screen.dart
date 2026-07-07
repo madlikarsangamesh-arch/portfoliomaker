@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:portfolio_ai/config/theme.dart';
 import 'package:portfolio_ai/presentation/providers/auth_provider.dart';
 import 'package:portfolio_ai/presentation/providers/portfolio_provider.dart';
@@ -20,6 +21,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       final auth = ref.read(authProvider);
       if (auth.userId != null) {
         ref.read(portfolioProvider.notifier).loadUserPortfolios(auth.userId!);
+        ref.read(portfolioProvider.notifier).loadCvHistory(auth.userId!);
       }
     });
   }
@@ -75,7 +77,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     children: [
                       Expanded(flex: 2, child: _buildPortfoliosList(portfolioState)),
                       const SizedBox(width: 24),
-                      Expanded(flex: 1, child: _buildTemplatesSidebar()),
+                      Expanded(flex: 1, child: _buildTemplatesSidebar(portfolioState)),
                     ],
                   )
                 else
@@ -83,7 +85,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     children: [
                       _buildPortfoliosList(portfolioState),
                       const SizedBox(height: 24),
-                      _buildTemplatesSidebar(),
+                      _buildTemplatesSidebar(portfolioState),
                     ],
                   ),
               ],
@@ -198,7 +200,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     ],
                   ),
                 ),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.white54),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit, color: AppTheme.neonCyan, size: 20),
+                      tooltip: 'Edit Portfolio',
+                      onPressed: () {
+                        ref.read(portfolioProvider.notifier).fetchPortfolioDetails(portfolio['id']);
+                        Navigator.pushNamed(context, '/editor');
+                      },
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.white54),
+                  ],
+                ),
                 onTap: () {
                   ref.read(portfolioProvider.notifier).fetchPortfolioDetails(portfolio['id']);
                   Navigator.pushNamed(context, '/preview', arguments: portfolio['id']);
@@ -240,7 +256,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  Widget _buildTemplatesSidebar() {
+  Widget _buildTemplatesSidebar(PortfolioState state) {
     final templates = [
       {'name': 'Developer', 'desc': 'Coding IDE terminal aesthetic', 'icon': Icons.code},
       {'name': 'Minimal', 'desc': 'Ultra clean white grid spacing', 'icon': Icons.space_bar},
@@ -291,6 +307,81 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             );
           },
         ),
+        _buildCvHistorySection(state),
+      ],
+    );
+  }
+
+  Widget _buildCvHistorySection(PortfolioState state) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 24),
+        Text(
+          'CV Version History',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+        if (state.cvHistory.isEmpty)
+          const GlassCard(
+            padding: EdgeInsets.all(16),
+            child: Center(
+              child: Text(
+                'No generated CV history found.',
+                style: TextStyle(color: Colors.white38, fontSize: 12),
+              ),
+            ),
+          )
+        else
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: state.cvHistory.length,
+            separatorBuilder: (c, i) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              final cv = state.cvHistory[index];
+              final version = cv['version'];
+              final url = cv['resume_url'];
+              final date = cv['created_at'];
+
+              return GlassCard(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.neonCyan.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.description, color: AppTheme.neonCyan, size: 20),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Version v$version', style: const TextStyle(fontWeight: FontWeight.bold)),
+                          Text('Created: $date', style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.download, color: AppTheme.neonCyan),
+                      onPressed: () {
+                        if (url != null) {
+                          final fullUrl = url.startsWith('/') 
+                              ? 'https://portfoliomaker-fxke.onrender.com/api/v1/static${url.replaceFirst("/api/v1/static", "")}' 
+                              : url;
+                          launchUrl(Uri.parse(fullUrl));
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
       ],
     );
   }
