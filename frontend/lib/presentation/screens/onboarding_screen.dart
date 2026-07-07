@@ -310,13 +310,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 const Text(
                   'Launch Portfolio & CV Builder',
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  textAlign: Center,
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
                 const Text(
                   'How would you like to set up your professional profile?',
                   style: TextStyle(color: Colors.white54, fontSize: 14),
-                  textAlign: Center,
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 40),
                 
