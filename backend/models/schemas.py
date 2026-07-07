@@ -32,7 +32,7 @@ class ProjectItem(BaseModel):
 class EducationItem(BaseModel):
     institution: str
     degree: str
-    field_of_study: str
+    field_of_study: Optional[str] = ""
     graduation_year: str
     gpa: Optional[str] = None
     branch: Optional[str] = None
@@ -43,18 +43,18 @@ class EducationItem(BaseModel):
 
 class CertificationItem(BaseModel):
     name: str
-    issuer: str
-    date: str
+    issuer: Optional[str] = ""
+    date: Optional[str] = ""
     link: Optional[str] = None
 
 class AchievementItem(BaseModel):
     title: str
-    description: str
-    date: str
+    description: Optional[str] = ""
+    date: Optional[str] = ""
 
 class SkillItem(BaseModel):
     name: str
-    category: str
+    category: Optional[str] = "Other"
     proficiency: Optional[str] = None
     icon: Optional[str] = None
 
@@ -73,30 +73,31 @@ class TestimonialItem(BaseModel):
 
 class BlogItem(BaseModel):
     title: str
-    date: str
+    date: Optional[str] = ""
     summary: Optional[str] = None
-    link: str
+    link: Optional[str] = ""
 
 # Core User Profile Data
 class UserProfile(BaseModel):
-    full_name: str
-    professional_title: str
-    email: str
+    full_name: Optional[str] = ""
+    professional_title: Optional[str] = ""
+    email: Optional[str] = ""
     phone: Optional[str] = None
     location: Optional[str] = None
     profile_photo_url: Optional[str] = None
-    about_me: str
-    skills: List[str]
-    education: List[EducationItem] = []
-    experience: List[ExperienceItem] = []
-    projects: List[ProjectItem] = []
-    certifications: List[CertificationItem] = []
-    achievements: List[AchievementItem] = []
+    about_me: Optional[str] = ""
+    skills: Optional[List[str]] = []
+    education: Optional[List[EducationItem]] = []
+    experience: Optional[List[ExperienceItem]] = []
+    projects: Optional[List[ProjectItem]] = []
+    certifications: Optional[List[CertificationItem]] = []
+    achievements: Optional[List[AchievementItem]] = []
     languages: Optional[List[str]] = []
     interests: Optional[List[str]] = []
     github: Optional[str] = None
     linkedin: Optional[str] = None
     portfolio_url: Optional[str] = None
+    resume_url: Optional[str] = None
     resume_path: Optional[str] = None
     availability_status: Optional[str] = None
     career_objective: Optional[str] = None
