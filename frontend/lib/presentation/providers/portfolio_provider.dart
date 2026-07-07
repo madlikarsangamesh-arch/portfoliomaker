@@ -277,6 +277,32 @@ class PortfolioNotifier extends StateNotifier<PortfolioState> {
     return null;
   }
 
+  Future<Map<String, dynamic>?> extractResume({
+    required Uint8List bytes,
+    required String filename,
+  }) async {
+    try {
+      final uri = Uri.parse('${AppConstants.baseApiUrl}/portfolios/extract-resume');
+      final request = http.MultipartRequest('POST', uri);
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'file',
+          bytes,
+          filename: filename,
+        ),
+      );
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['profile'] as Map<String, dynamic>?;
+      }
+    } catch (e) {
+      // fail silently
+    }
+    return null;
+  }
+
   Future<void> loadCvHistory(String userId) async {
     try {
       final response = await http.get(

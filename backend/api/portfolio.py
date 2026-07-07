@@ -213,3 +213,18 @@ def get_cv_history_endpoint(user_id: str):
     history = portfolio_repository.get_cv_history(user_id)
     return history
 
+@router.post("/extract-resume")
+async def extract_resume(
+    file: UploadFile = File(...)
+):
+    try:
+        from backend.agents.resume_analyzer import resume_analyzer_agent
+        file_bytes = await file.read()
+        filename = file.filename
+        
+        parsed_data = resume_analyzer_agent.parse_resume(file_bytes, filename)
+        return {"status": "success", "profile": parsed_data}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Resume extraction failed: {e}")
+
+
