@@ -189,7 +189,7 @@ class PortfolioNotifier extends StateNotifier<PortfolioState> {
       }
     } catch (e) {
       _failAllPendingSteps();
-      state = state.copyWith(isLoading: false, error: 'Connection failed during pipeline execution');
+      state = state.copyWith(isLoading: false, error: 'Connection failed during pipeline execution: $e');
       return false;
     }
   }

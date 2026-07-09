@@ -9,6 +9,7 @@ from backend.models.schemas import UserProfile, DesignPreferences
 from backend.repositories.portfolio_repository import portfolio_repository
 from backend.agents.orchestrator import orchestrator
 from backend.services.firebase import firebase_service
+from backend.services.llm import LLMConfigurationError, LLMServiceError
 
 router = APIRouter(prefix="/portfolios", tags=["Portfolios"])
 
@@ -41,14 +42,19 @@ async def generate_portfolio(
         profile_dict["resume_url"] = uploaded_url
 
     # Run loop agents orchestrator pipeline
-    result = orchestrator.run_pipeline(
-        user_id=user_id,
-        portfolio_id=portfolio_id,
-        profile_input=profile_dict,
-        design_prefs=design_dict,
-        resume_bytes=resume_bytes,
-        resume_name=resume_name
-    )
+    try:
+        result = orchestrator.run_pipeline(
+            user_id=user_id,
+            portfolio_id=portfolio_id,
+            profile_input=profile_dict,
+            design_prefs=design_dict,
+            resume_bytes=resume_bytes,
+            resume_name=resume_name
+        )
+    except LLMConfigurationError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    except LLMServiceError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
 
     if not result.get("success") and result.get("current_step") == "info_collection":
         # Missing fields - return questions
@@ -201,11 +207,16 @@ def ai_polish(payload: dict):
     system_instruction = "You are a professional copywriter and resume optimization assistant. Rewrite the user's bullet point or biography to be highly impactful, quantified, professional, and clear. Keep a similar length."
     prompt = f"Optimize this text.\nContext: {context}\nText to polish: {text}\n\nPolished text:"
     
-    polished = llm_service.call(
-        prompt=prompt,
-        system_instruction=system_instruction,
-        fallback_response=text
-    )
+    try:
+        polished = llm_service.call(
+            prompt=prompt,
+            system_instruction=system_instruction,
+            fallback_response=text
+        )
+    except LLMConfigurationError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    except LLMServiceError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
     return {"status": "success", "polished_text": polished.strip()}
 
 @router.get("/cv-history/{user_id}")
@@ -226,5 +237,4 @@ async def extract_resume(
         return {"status": "success", "profile": parsed_data}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Resume extraction failed: {e}")
-
 
