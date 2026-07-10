@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:portfolio_ai/config/constants.dart';
 import 'package:portfolio_ai/config/theme.dart';
 import 'package:portfolio_ai/presentation/providers/portfolio_provider.dart';
 import 'package:portfolio_ai/presentation/widgets/glass_card.dart';
@@ -208,7 +209,17 @@ class PreviewScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: () {}, // Action to download offline HTML source ZIP package
+            onPressed: () {
+              final portId = portfolioState.portfolioId;
+              if (portId != null) {
+                final downloadUrl = '${AppConstants.baseApiUrl}/portfolios/download-source/$portId';
+                launchUrl(Uri.parse(downloadUrl));
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('No active portfolio ID found to download source code.')),
+                );
+              }
+            },
             icon: const Icon(Icons.download),
             label: const Text('Download Source code'),
             style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 45)),

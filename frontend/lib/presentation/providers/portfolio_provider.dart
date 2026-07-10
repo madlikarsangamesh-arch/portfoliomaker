@@ -15,6 +15,7 @@ class PortfolioState {
   final String? resumeUrl;
   final Map<String, dynamic>? recruiterScorecard;
   final List<dynamic> cvHistory;
+  final String? portfolioId;
 
   PortfolioState({
     this.portfolios = const [],
@@ -26,6 +27,7 @@ class PortfolioState {
     this.resumeUrl,
     this.recruiterScorecard,
     this.cvHistory = const [],
+    this.portfolioId,
   });
 
   PortfolioState copyWith({
@@ -38,6 +40,7 @@ class PortfolioState {
     String? resumeUrl,
     Map<String, dynamic>? recruiterScorecard,
     List<dynamic>? cvHistory,
+    String? portfolioId,
   }) {
     return PortfolioState(
       portfolios: portfolios ?? this.portfolios,
@@ -49,6 +52,7 @@ class PortfolioState {
       resumeUrl: resumeUrl ?? this.resumeUrl,
       recruiterScorecard: recruiterScorecard ?? this.recruiterScorecard,
       cvHistory: cvHistory ?? this.cvHistory,
+      portfolioId: portfolioId ?? this.portfolioId,
     );
   }
 }
@@ -179,6 +183,7 @@ class PortfolioNotifier extends StateNotifier<PortfolioState> {
           generatedUrl: data['deployment_url'],
           resumeUrl: data['resume_url'],
           recruiterScorecard: data['recruiter_scorecard'],
+          portfolioId: data['portfolio_id'],
         );
         return true;
       } else {
