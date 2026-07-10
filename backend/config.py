@@ -8,7 +8,7 @@ class Settings:
     
     # LLM configurations (using Gemini by default)
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "").strip().strip("'\"")
-    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-1.5-flash").strip().strip("'\"")
+    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash").strip().strip("'\"")
     LLM_ALLOW_FALLBACK: bool = os.getenv(
         "LLM_ALLOW_FALLBACK",
         "False" if IS_RENDER or ENVIRONMENT in {"production", "prod"} else "True"

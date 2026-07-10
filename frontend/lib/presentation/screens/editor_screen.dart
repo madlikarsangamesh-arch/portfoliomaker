@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:portfolio_ai/config/constants.dart';
 import 'package:portfolio_ai/config/theme.dart';
 import 'package:portfolio_ai/main.dart';
 import 'package:portfolio_ai/presentation/providers/auth_provider.dart';
@@ -328,10 +329,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen> with SingleTickerPr
               onPressed: () {
                 final url = _profile['resume_url'];
                 if (url != null) {
-                  final fullUrl = url.startsWith('/') 
-                      ? 'https://portfoliomaker-fxke.onrender.com/api/v1/static${url.replaceFirst("/api/v1/static", "")}' 
-                      : url;
-                  launchUrl(Uri.parse(fullUrl));
+                  final filename = url.split('/').last;
+                  final downloadUrl = '${AppConstants.baseApiUrl}/portfolios/download-cv?filename=$filename';
+                  launchUrl(Uri.parse(downloadUrl));
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Please compile your CV once to generate download links!')),

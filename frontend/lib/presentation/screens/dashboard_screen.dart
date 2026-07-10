@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:portfolio_ai/config/constants.dart';
 import 'package:portfolio_ai/config/theme.dart';
 import 'package:portfolio_ai/presentation/providers/auth_provider.dart';
 import 'package:portfolio_ai/presentation/providers/portfolio_provider.dart';
@@ -370,10 +371,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       icon: const Icon(Icons.download, color: AppTheme.neonCyan),
                       onPressed: () {
                         if (url != null) {
-                          final fullUrl = url.startsWith('/') 
-                              ? 'https://portfoliomaker-fxke.onrender.com/api/v1/static${url.replaceFirst("/api/v1/static", "")}' 
-                              : url;
-                          launchUrl(Uri.parse(fullUrl));
+                          final filename = url.split('/').last;
+                          final downloadUrl = '${AppConstants.baseApiUrl}/portfolios/download-cv?filename=$filename';
+                          launchUrl(Uri.parse(downloadUrl));
                         }
                       },
                     ),

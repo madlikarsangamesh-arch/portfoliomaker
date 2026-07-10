@@ -3,8 +3,8 @@ import json
 import uuid
 import zipfile
 from typing import Optional, List
-from fastapi import APIRouter, File, UploadFile, Form, HTTPException, Depends
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, File, UploadFile, Form, HTTPException, Depends, Request
+from fastapi.responses import StreamingResponse, FileResponse
 from backend.models.schemas import UserProfile, DesignPreferences
 from backend.repositories.portfolio_repository import portfolio_repository
 from backend.agents.orchestrator import orchestrator
@@ -15,6 +15,7 @@ router = APIRouter(prefix="/portfolios", tags=["Portfolios"])
 
 @router.post("/generate")
 async def generate_portfolio(
+    request: Request,
     user_id: str = Form(...),
     portfolio_id: Optional[str] = Form(None),
     profile_data_str: str = Form(...),  # JSON string of profile info
@@ -39,6 +40,9 @@ async def generate_portfolio(
         # Upload resume to storage for later downloads
         filename = f"resume_{user_id}_{portfolio_id[:6]}_{resume_name}"
         uploaded_url = firebase_service.upload_file("resumes", filename, resume_bytes)
+        if uploaded_url.startswith("/"):
+            base_url = str(request.base_url).rstrip("/")
+            uploaded_url = f"{base_url}{uploaded_url}"
         profile_dict["resume_url"] = uploaded_url
 
     # Run loop agents orchestrator pipeline
@@ -49,12 +53,18 @@ async def generate_portfolio(
             profile_input=profile_dict,
             design_prefs=design_dict,
             resume_bytes=resume_bytes,
-            resume_name=resume_name
+            resume_name=resume_name,
+            request=request
         )
     except LLMConfigurationError as exc:
         raise HTTPException(status_code=503, detail=str(exc))
     except LLMServiceError as exc:
         raise HTTPException(status_code=503, detail=str(exc))
+    except Exception as exc:
+        import traceback
+        import logging
+        logging.getLogger("PortfolioAI.API.Portfolio").error(f"Unexpected generation failure: {exc}\n{traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Generation pipeline failed: {str(exc)}")
 
     if not result.get("success") and result.get("current_step") == "info_collection":
         # Missing fields - return questions
@@ -166,6 +176,7 @@ def save_portfolio(payload: dict):
 
 @router.post("/upload-image")
 async def upload_image(
+    request: Request,
     file: UploadFile = File(...),
     folder: str = Form("images")
 ):
@@ -178,6 +189,9 @@ async def upload_image(
         
         # Save file to disk/cloud with compression in firebase_service
         url = firebase_service.upload_file(folder, filename, file_bytes)
+        if url.startswith("/"):
+            base_url = str(request.base_url).rstrip("/")
+            url = f"{base_url}{url}"
         
         # Get compressed size
         compressed_size = original_size
@@ -194,6 +208,24 @@ async def upload_image(
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Image upload failed: {e}")
+
+@router.get("/download-cv")
+def download_cv(filename: str):
+    import os
+    from backend.config import settings
+    
+    # Sanitize the filename to prevent directory traversal
+    safe_filename = os.path.basename(filename)
+    local_path = os.path.join(settings.LOCAL_STORAGE_DIR, "resumes", safe_filename)
+    
+    if not os.path.exists(local_path):
+        raise HTTPException(status_code=404, detail="CV file not found")
+        
+    return FileResponse(
+        path=local_path,
+        media_type="application/pdf" if safe_filename.endswith(".pdf") else "text/html",
+        filename=safe_filename
+    )
 
 @router.post("/ai-polish")
 def ai_polish(payload: dict):

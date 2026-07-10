@@ -790,7 +790,31 @@ footer {{
         image_html = ""
         photo_url = profile.get("profile_photo_url")
         if photo_url:
-            image_html = f'<img src="{photo_url}" alt="{profile.get("full_name")}">'
+            embedded_photo = None
+            if "/static/" in photo_url:
+                try:
+                    relative_part = photo_url.split("/static/")[-1].lstrip("/\\")
+                    from backend.config import settings
+                    local_path = os.path.join(settings.LOCAL_STORAGE_DIR, relative_part)
+                    if os.path.exists(local_path):
+                        import base64
+                        with open(local_path, "rb") as img_file:
+                            encoded = base64.b64encode(img_file.read()).decode('utf-8')
+                        ext = os.path.splitext(local_path)[1].lower()
+                        mime = "image/jpeg"
+                        if ext == ".png":
+                            mime = "image/png"
+                        elif ext == ".gif":
+                            mime = "image/gif"
+                        elif ext == ".webp":
+                            mime = "image/webp"
+                        embedded_photo = f"data:{mime};base64,{encoded}"
+                except Exception as e:
+                    import logging
+                    logging.getLogger("PortfolioAI.Generator").error(f"Failed to embed local profile photo: {e}")
+            
+            use_url = embedded_photo or photo_url
+            image_html = f'<img src="{use_url}" alt="{profile.get("full_name")}">'
         else:
             image_html = f'<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg, var(--primary), var(--secondary)); color:#111115; font-size:4rem; font-weight:800;">{profile.get("full_name")[0] if profile.get("full_name") else "P"}</div>'
 

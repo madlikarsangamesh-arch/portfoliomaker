@@ -27,12 +27,24 @@ class LLMService:
         if self.active:
             try:
                 genai.configure(api_key=self.api_key)
-                # Query available models to help diagnose key and regional availability
+                
+                # Check available models dynamically to pick the first active flash model
+                detected_model = None
                 try:
-                    models = [m.name for m in genai.list_models()]
-                    logger.info(f"Available Gemini Models for this key: {models}")
+                    for m in genai.list_models():
+                        if "flash" in m.name.lower() and "generatecontent" in [method.lower() for method in m.supported_generation_methods]:
+                            name = m.name
+                            if name.startswith("models/"):
+                                name = name[len("models/"):]
+                            detected_model = name
+                            break
+                    if detected_model:
+                        logger.info(f"Dynamically selected Gemini flash model: {detected_model}")
+                        self.model_name = detected_model
+                    else:
+                        logger.warning(f"No active flash models found in list_models. Using configured model: {self.model_name}")
                 except Exception as list_err:
-                    logger.warning(f"Could not list available models for key: {list_err}")
+                    logger.warning(f"Could not list available models to dynamically pick flash model: {list_err}. Using configured model: {self.model_name}")
 
                 self.model = genai.GenerativeModel(self.model_name)
                 logger.info("Gemini API initialized successfully with model %s.", self.model_name)

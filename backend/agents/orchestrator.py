@@ -1,6 +1,7 @@
 import logging
 import uuid
 from typing import Dict, Any, Tuple, List
+from fastapi import Request
 from backend.agents.info_collector import info_collector_agent
 from backend.agents.resume_analyzer import resume_analyzer_agent
 from backend.agents.content_enhancer import content_enhancer_agent
@@ -24,7 +25,8 @@ class Orchestrator:
         profile_input: dict,
         design_prefs: dict,
         resume_bytes: bytes = None,
-        resume_name: str = None
+        resume_name: str = None,
+        request: Request = None
     ) -> Dict[str, Any]:
         """
         Runs the full 9-agent Loop workflow orchestrating the portfolio generation.
@@ -71,6 +73,11 @@ class Orchestrator:
         steps_log.append("Agent 8: Generating professional ATS-friendly resumes and PDF formats...")
         resume_filename = f"resume_{user_id}_{portfolio_id[:6]}.pdf"
         resume_url = resume_generator_agent.generate_pdf_resume(enhanced_profile, resume_filename)
+        
+        if request and resume_url.startswith("/"):
+            base_url = str(request.base_url).rstrip("/")
+            resume_url = f"{base_url}{resume_url}"
+            
         enhanced_profile["resume_url"] = resume_url
 
         # Step 5: Planning Design layouts
