@@ -27,7 +27,7 @@ class PortfolioRepository:
                 WHERE id = ?
             """, (
                 profile_json, design_json, data.get("html_code"), data.get("css_code"), 
-                data.get("js_code"), data.get("deployment_url"), scorecard_json, 
+                data.get("js_code"), data.get("deployment_url"), scorecard_json, data.get("resume_url"), 
                 1 if data.get("is_active", True) else 0, data.get("version", 1), 
                 data.get("updated_at"), portfolio_id
             ))
@@ -35,12 +35,12 @@ class PortfolioRepository:
             cursor.execute("""
                 INSERT INTO portfolios (
                     id, user_id, profile, design, html_code, css_code, js_code, 
-                    deployment_url, recruiter_scorecard, is_active, version, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    deployment_url, recruiter_scorecard, resume_url, is_active, version, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 portfolio_id, data.get("user_id"), profile_json, design_json, data.get("html_code"),
                 data.get("css_code"), data.get("js_code"), data.get("deployment_url"), scorecard_json,
-                1 if data.get("is_active", True) else 0, data.get("version", 1),
+                data.get("resume_url"), 1 if data.get("is_active", True) else 0, data.get("version", 1),
                 data.get("created_at"), data.get("updated_at")
             ))
         conn.commit()

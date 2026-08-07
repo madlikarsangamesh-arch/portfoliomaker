@@ -1,0 +1,39 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: portfoliomaker-backend
+    ports:
+      - "${PORT:-8000}:${PORT:-8000}"
+    environment:
+      HOST: 0.0.0.0
+      PORT: ${PORT:-8000}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      LLM_ALLOW_FALLBACK: ${LLM_ALLOW_FALLBACK:-true}
+      FIREBASE_MOCK: ${FIREBASE_MOCK:-true}
+      VERCEL_MOCK: ${VERCEL_MOCK:-true}
+      SECRET_KEY: ${SECRET_KEY:-portfolio_ai_super_secret_session_key_12345}
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+    volumes:
+      # Persist SQLite DB and uploaded files across container restarts
+      - ./backend/storage:/app/backend/storage
+    env_file:
+      - path: .env
+        required: false
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import os, urllib.request; urllib.request.urlopen(f'http://127.0.0.1:{os.environ.get(\"PORT\", \"8000\")}/health')",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s

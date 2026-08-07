@@ -42,6 +42,7 @@ def init_db():
             js_code TEXT,
             deployment_url TEXT,
             recruiter_scorecard JSON,
+            resume_url TEXT,
             is_active INTEGER DEFAULT 1,
             version INTEGER DEFAULT 1,
             created_at TEXT,
@@ -49,6 +50,12 @@ def init_db():
             FOREIGN KEY(user_id) REFERENCES users(id)
         )
     """)
+
+    # Ensure legacy databases gain the resume_url column if missing.
+    cursor.execute("PRAGMA table_info(portfolios)")
+    columns = [row['name'] for row in cursor.fetchall()]
+    if 'resume_url' not in columns:
+        cursor.execute("ALTER TABLE portfolios ADD COLUMN resume_url TEXT")
     
     # Analytics table
     cursor.execute("""

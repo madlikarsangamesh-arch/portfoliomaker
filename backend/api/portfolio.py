@@ -166,6 +166,7 @@ def save_portfolio(payload: dict):
         "js_code": existing.get("js_code") if existing else None,
         "deployment_url": existing.get("deployment_url") if existing else None,
         "recruiter_scorecard": existing.get("recruiter_scorecard") if existing else None,
+        "resume_url": existing.get("resume_url") if existing else None,
         "is_active": True,
         "version": version,
         "created_at": created_at,

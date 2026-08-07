@@ -103,7 +103,8 @@ class Orchestrator:
             html=html,
             css=css,
             js=js,
-            scorecard=scorecard
+            scorecard=scorecard,
+            resume_url=resume_url
         )
 
         # Step 9: Vercel Deployer

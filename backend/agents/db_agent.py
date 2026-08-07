@@ -20,7 +20,7 @@ class DBAgent:
     def get_user_portfolio_list(self, user_id: str) -> List[dict]:
         return portfolio_repository.get_by_user_id(user_id)
 
-    def save_portfolio_version(self, portfolio_id: str, user_id: str, profile: dict, design: dict, html: str, css: str, js: str, scorecard: dict = None, url: str = None) -> dict:
+    def save_portfolio_version(self, portfolio_id: str, user_id: str, profile: dict, design: dict, html: str, css: str, js: str, scorecard: dict = None, url: str = None, resume_url: str = None) -> dict:
         """
         Saves a new or existing portfolio snapshot, incrementing version control logs.
         """
@@ -42,6 +42,7 @@ class DBAgent:
             "js_code": js,
             "deployment_url": url or (existing.get("deployment_url") if existing else None),
             "recruiter_scorecard": scorecard or (existing.get("recruiter_scorecard") if existing else None),
+            "resume_url": resume_url or profile.get("resume_url") or (existing.get("resume_url") if existing else None),
             "is_active": True,
             "version": version,
             "created_at": created_at,
