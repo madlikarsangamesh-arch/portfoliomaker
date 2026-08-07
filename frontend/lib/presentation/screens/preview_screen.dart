@@ -13,7 +13,7 @@ class PreviewScreen extends ConsumerWidget {
   Future<void> _launchUrl(String url) async {
     final uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
   }
 
@@ -58,7 +58,7 @@ class PreviewScreen extends ConsumerWidget {
                     children: [
                       Expanded(flex: 3, child: _buildScorecardReport(context, score, strengths, weaknesses, suggestions)),
                       const SizedBox(width: 24),
-                      Expanded(flex: 2, child: _buildSharingCard(context, liveUrl)),
+                      Expanded(flex: 2, child: _buildSharingCard(context, liveUrl, portfolioState)),
                     ],
                   );
                 } else {
@@ -66,7 +66,7 @@ class PreviewScreen extends ConsumerWidget {
                     children: [
                       _buildScorecardReport(context, score, strengths, weaknesses, suggestions),
                       const SizedBox(height: 24),
-                      _buildSharingCard(context, liveUrl),
+                      _buildSharingCard(context, liveUrl, portfolioState),
                     ],
                   );
                 }
@@ -191,7 +191,7 @@ class PreviewScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSharingCard(BuildContext context, String url) {
+  Widget _buildSharingCard(BuildContext context, String url, PortfolioState portfolioState) {
     return GlassCard(
       child: Column(
         children: [
@@ -209,12 +209,19 @@ class PreviewScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: () {
+            onPressed: () async {
               final portId = portfolioState.portfolioId;
               if (portId != null) {
                 final downloadUrl = '${AppConstants.baseApiUrl}/portfolios/download-source/$portId';
-                launchUrl(Uri.parse(downloadUrl));
-              } else {
+                final uri = Uri.parse(downloadUrl);
+                if (await canLaunchUrl(uri)) {
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                } else if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Could not open the source download link.')),
+                  );
+                }
+              } else if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('No active portfolio ID found to download source code.')),
                 );
@@ -223,6 +230,27 @@ class PreviewScreen extends ConsumerWidget {
             icon: const Icon(Icons.download),
             label: const Text('Download Source code'),
             style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 45)),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: () async {
+              final resumeUrl = portfolioState.resumeUrl;
+              if (resumeUrl != null && resumeUrl.isNotEmpty) {
+                final uri = Uri.parse(resumeUrl);
+                if (await canLaunchUrl(uri)) {
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  return;
+                }
+              }
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('No CV available yet for this portfolio.')),
+                );
+              }
+            },
+            icon: const Icon(Icons.picture_as_pdf),
+            label: const Text('Download Resume (PDF)'),
+            style: OutlinedButton.styleFrom(minimumSize: const Size(double.infinity, 45)),
           ),
         ],
       ),

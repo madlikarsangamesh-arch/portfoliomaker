@@ -181,9 +181,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     }
   }
 
-  void _submitBuildPipeline() async {
+  Future<bool> _submitBuildPipeline() async {
     final auth = ref.read(authProvider);
-    if (auth.userId == null) return;
+    if (auth.userId == null) return false;
 
     final parsedSkills = _skillsCtrl.text
         .split(',')
@@ -224,13 +224,60 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
     Navigator.pushNamed(context, '/wizard');
 
-    await ref.read(portfolioProvider.notifier).buildAndDeployPortfolio(
+    final success = await ref.read(portfolioProvider.notifier).buildAndDeployPortfolio(
       userId: auth.userId!,
       profile: profile,
       design: design,
       resumeBytes: _resumeBytes,
       resumeName: _resumeName,
     );
+
+    return success;
+  }
+
+  Future<void> _downloadResume() async {
+    final existingUrl = ref.read(portfolioProvider).resumeUrl;
+    if (existingUrl != null && existingUrl.isNotEmpty) {
+      final uri = Uri.parse(existingUrl);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open the CV link.')),
+        );
+      }
+      return;
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Generating your CV — this runs together with Deploy, one moment...')),
+      );
+    }
+
+    final success = await _submitBuildPipeline();
+    if (!success) {
+      return;
+    }
+
+    final resumeUrl = ref.read(portfolioProvider).resumeUrl;
+    if (resumeUrl != null && resumeUrl.isNotEmpty) {
+      final uri = Uri.parse(resumeUrl);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open the CV link.')),
+        );
+      }
+      return;
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('CV generation is taking longer than expected. Please try again shortly.')),
+      );
+    }
   }
 
   @override
@@ -878,7 +925,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         const SizedBox(height: 40),
         
         ElevatedButton.icon(
-          onPressed: _submitBuildPipeline,
+          onPressed: () async {
+            await _submitBuildPipeline();
+          },
           icon: const Icon(Icons.rocket_launch, color: Colors.black),
           label: const Text('Deploy as Portfolio Website', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
           style: ElevatedButton.styleFrom(
@@ -889,12 +938,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         const SizedBox(height: 16),
         
         OutlinedButton.icon(
-          onPressed: () {
-            final url = _photoUrl; // fallback or download link
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Building CV... Click Deploy to compile and register download links.')),
-            );
-          },
+          onPressed: _downloadResume,
           icon: const Icon(Icons.download, color: AppTheme.neonCyan),
           label: const Text('Download CV (PDF)', style: TextStyle(color: AppTheme.neonCyan)),
           style: OutlinedButton.styleFrom(
