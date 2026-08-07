@@ -1,0 +1,50 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Frontend (not needed in backend image)
+frontend/
+
+# Python caches and virtual environments
+**/__pycache__
+**/*.py[cod]
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+.venv
+venv
+env
+*.egg-info
+
+# Local runtime data (mounted as volume in docker-compose)
+backend/storage/database.db
+backend/storage/resumes/*
+backend/storage/portfolios/*
+backend/storage/templates/*
+backend/storage/profiles/*
+!backend/storage/profiles/.gitkeep
+
+# IDE and OS
+.idea
+.vscode
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Environment secrets
+.env
+.env.*
+!.env.example
+
+# Documentation and CI (not needed at runtime)
+*.md
+.github
+
+# Docker build context
+docker-compose*.yml
+Dockerfile*
+
+# Agent transcripts and misc
+agent-transcripts
