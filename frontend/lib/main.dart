@@ -10,14 +10,11 @@ import 'package:portfolio_maker/presentation/screens/analytics_screen.dart';
 import 'package:portfolio_maker/presentation/screens/admin_screen.dart';
 import 'package:portfolio_maker/presentation/screens/settings_screen.dart';
 import 'package:portfolio_maker/presentation/screens/editor_screen.dart';
-import 'package:portfolio_maker/services/appwrite_service.dart';
 
 final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.dark);
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  AppwriteService.instance.initialize();
-  await AppwriteService.instance.healthCheck();
   runApp(
     const ProviderScope(
       child: PortfolioMakerApp(),

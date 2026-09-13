@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:portfolio_ai/config/theme.dart';
-import 'package:portfolio_ai/presentation/widgets/glass_card.dart';
+import 'package:portfolio_maker/config/theme.dart';
+import 'package:portfolio_maker/presentation/widgets/glass_card.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({Key? key}) : super(key: key);

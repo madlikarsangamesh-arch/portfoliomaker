@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:portfolio_ai/config/theme.dart';
-import 'package:portfolio_ai/presentation/providers/portfolio_provider.dart';
-import 'package:portfolio_ai/presentation/providers/analytics_provider.dart';
-import 'package:portfolio_ai/presentation/widgets/glass_card.dart';
-import 'package:portfolio_ai/presentation/widgets/stats_chart.dart';
+import 'package:portfolio_maker/config/theme.dart';
+import 'package:portfolio_maker/presentation/providers/portfolio_provider.dart';
+import 'package:portfolio_maker/presentation/providers/analytics_provider.dart';
+import 'package:portfolio_maker/presentation/widgets/glass_card.dart';
+import 'package:portfolio_maker/presentation/widgets/stats_chart.dart';
 
 class AnalyticsScreen extends ConsumerStatefulWidget {
   const AnalyticsScreen({Key? key}) : super(key: key);

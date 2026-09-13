@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
-import 'package:portfolio_ai/config/constants.dart';
-import 'package:portfolio_ai/presentation/widgets/loading_animation.dart';
+import 'package:portfolio_maker/config/constants.dart';
+import 'package:portfolio_maker/presentation/widgets/loading_animation.dart';
 
 class PortfolioState {
   final List<dynamic> portfolios;

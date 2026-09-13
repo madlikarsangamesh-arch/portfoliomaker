@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:portfolio_ai/config/theme.dart';
+import 'package:portfolio_maker/config/theme.dart';
 
 class AnalyticsSummaryChart extends StatelessWidget {
   final Map<String, int> data;

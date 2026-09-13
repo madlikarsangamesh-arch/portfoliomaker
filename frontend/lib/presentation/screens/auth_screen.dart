@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:portfolio_ai/config/theme.dart';
-import 'package:portfolio_ai/presentation/providers/auth_provider.dart';
-import 'package:portfolio_ai/presentation/widgets/glass_card.dart';
+import 'package:portfolio_maker/config/theme.dart';
+import 'package:portfolio_maker/presentation/providers/auth_provider.dart';
+import 'package:portfolio_maker/presentation/widgets/glass_card.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({Key? key}) : super(key: key);

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
-import 'package:portfolio_ai/config/constants.dart';
+import 'package:portfolio_maker/config/constants.dart';
 
 class AdminState {
   final Map<String, dynamic> globalStats;
