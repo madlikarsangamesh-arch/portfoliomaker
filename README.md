@@ -1,6 +1,6 @@
-# AI Portfolio Engineer - Conversational AI Agent
+# Portfolio Maker - Conversational AI Agent
 
-AI Portfolio Engineer is a production-ready, full-stack application. Instead of static forms, it interviews the user in real-time, extracts experiences from uploaded resumes, designs visual layouts, enhances copy, runs quality checks, deploys the static portfolio directly to Vercel, and reviews the final product like a recruiter.
+Portfolio Maker is a production-ready, full-stack application. Instead of static forms, it interviews the user in real-time, extracts experiences from uploaded resumes, designs visual layouts, enhances copy, runs quality checks, deploys the static portfolio directly to Vercel, and reviews the final product like a recruiter.
 
 ---
 

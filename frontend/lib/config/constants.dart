@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 class AppConstants {
-  static const String appName = 'AI Portfolio Engineer';
+  static const String appName = 'Portfolio Maker';
   
   // Base API URL
   static String get baseApiUrl {

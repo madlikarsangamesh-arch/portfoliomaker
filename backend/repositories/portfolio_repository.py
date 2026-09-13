@@ -21,15 +21,15 @@ class PortfolioRepository:
         if exists:
             cursor.execute("""
                 UPDATE portfolios SET 
-                    profile = ?, design = ?, html_code = ?, css_code = ?, js_code = ?, 
-                    deployment_url = ?, recruiter_scorecard = ?, is_active = ?, 
+                    profile = ?, design = ?, html_code = ?, css_code = ?, js_code = ?,
+                    deployment_url = ?, recruiter_scorecard = ?, resume_url = ?, is_active = ?,
                     version = ?, updated_at = ?
                 WHERE id = ?
             """, (
-                profile_json, design_json, data.get("html_code"), data.get("css_code"), 
-                data.get("js_code"), data.get("deployment_url"), scorecard_json, data.get("resume_url"), 
-                1 if data.get("is_active", True) else 0, data.get("version", 1), 
-                data.get("updated_at"), portfolio_id
+                profile_json, design_json, data.get("html_code"), data.get("css_code"),
+                data.get("js_code"), data.get("deployment_url"), scorecard_json,
+                data.get("resume_url"), 1 if data.get("is_active", True) else 0,
+                data.get("version", 1), data.get("updated_at"), portfolio_id
             ))
         else:
             cursor.execute("""

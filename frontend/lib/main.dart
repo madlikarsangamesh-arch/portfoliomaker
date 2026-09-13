@@ -1,36 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:portfolio_ai/config/theme.dart';
-import 'package:portfolio_ai/presentation/screens/auth_screen.dart';
-import 'package:portfolio_ai/presentation/screens/dashboard_screen.dart';
-import 'package:portfolio_ai/presentation/screens/onboarding_screen.dart';
-import 'package:portfolio_ai/presentation/screens/builder_wizard.dart';
-import 'package:portfolio_ai/presentation/screens/preview_screen.dart';
-import 'package:portfolio_ai/presentation/screens/analytics_screen.dart';
-import 'package:portfolio_ai/presentation/screens/admin_screen.dart';
-import 'package:portfolio_ai/presentation/screens/settings_screen.dart';
-import 'package:portfolio_ai/presentation/screens/editor_screen.dart';
+import 'package:portfolio_maker/config/theme.dart';
+import 'package:portfolio_maker/presentation/screens/auth_screen.dart';
+import 'package:portfolio_maker/presentation/screens/dashboard_screen.dart';
+import 'package:portfolio_maker/presentation/screens/onboarding_screen.dart';
+import 'package:portfolio_maker/presentation/screens/builder_wizard.dart';
+import 'package:portfolio_maker/presentation/screens/preview_screen.dart';
+import 'package:portfolio_maker/presentation/screens/analytics_screen.dart';
+import 'package:portfolio_maker/presentation/screens/admin_screen.dart';
+import 'package:portfolio_maker/presentation/screens/settings_screen.dart';
+import 'package:portfolio_maker/presentation/screens/editor_screen.dart';
+import 'package:portfolio_maker/services/appwrite_service.dart';
 
 final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.dark);
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  AppwriteService.instance.initialize();
+  await AppwriteService.instance.healthCheck();
   runApp(
     const ProviderScope(
-      child: PortfolioAIApp(),
+      child: PortfolioMakerApp(),
     ),
   );
 }
 
-class PortfolioAIApp extends ConsumerWidget {
-  const PortfolioAIApp({Key? key}) : super(key: key);
+class PortfolioMakerApp extends ConsumerWidget {
+  const PortfolioMakerApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp(
-      title: 'AI Portfolio Engineer',
+      title: 'Portfolio Maker',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
