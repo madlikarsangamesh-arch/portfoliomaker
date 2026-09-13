@@ -11,8 +11,6 @@ dependencies:
   flutter:
     sdk: flutter
 
-  appwrite: ^11.0.0
-
   # State Management
   flutter_riverpod: ^2.4.9
   riverpod_annotation: ^2.3.3
