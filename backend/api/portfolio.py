@@ -20,7 +20,7 @@ async def generate_portfolio(
     portfolio_id: Optional[str] = Form(None),
     profile_data_str: str = Form(...),  # JSON string of profile info
     design_prefs_str: str = Form(...),   # JSON string of design choices
-    resume_file: Optional[UploadFile] = File(None)
+    resume_file: Optional[UploadFile | str] = File(None)
 ):
     try:
         profile_dict = json.loads(profile_data_str)
@@ -33,16 +33,18 @@ async def generate_portfolio(
 
     resume_bytes = None
     resume_name = None
-    if resume_file:
+    if isinstance(resume_file, UploadFile):
         resume_bytes = await resume_file.read()
         resume_name = resume_file.filename
-        
+
         # Upload resume to storage for later downloads
         filename = f"resume_{user_id}_{portfolio_id[:6]}_{resume_name}"
         uploaded_url = firebase_service.upload_file("resumes", filename, resume_bytes)
+
         if uploaded_url.startswith("/"):
             base_url = str(request.base_url).rstrip("/")
             uploaded_url = f"{base_url}{uploaded_url}"
+
         profile_dict["resume_url"] = uploaded_url
 
     # Run loop agents orchestrator pipeline
